@@ -1,2639 +1,1496 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zakat Tracker | Personal Zakat Management</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PunchTrack — Office Time Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ══════════════════════════════════════════════
-   DESIGN TOKENS
-══════════════════════════════════════════════ */
-:root {
-  --sidebar-bg    : #0C1E10;
-  --sidebar-hover : rgba(255,255,255,0.07);
-  --sidebar-active: rgba(201,168,75,0.12);
-  --sidebar-border: #C9A84C;
-  --sidebar-text  : rgba(255,255,255,0.72);
-  --sidebar-label : rgba(255,255,255,0.35);
-  --sidebar-width : 240px;
+/* ═══════════════════════════════════════════════
+   PUNCHTRACK  |  Indigo × Cyan  |  BD Office App
+   ═══════════════════════════════════════════════ */
+:root{
+  --pri:#4338CA; --pri-l:#6366F1; --pri-d:#3730A3;
+  --acc:#06B6D4; --ok:#10B981; --warn:#F59E0B; --err:#EF4444;
+  --bg:#EEF2FF; --surf:#FFFFFF; --surf2:#F5F7FF;
+  --bdr:#DDE3F5; --bdr2:#C7D2FE;
+  --txt:#0F172A; --txt2:#475569; --txt3:#94A3B8;
+  --sbar-bg:#1E1B4B; --sbar-txt:#C7D2FE; --sbar-active:#FFFFFF;
+  --sbar-w:260px; --hdr:60px;
+  --r:12px; --r-sm:8px; --r-lg:16px;
+  --shadow:0 1px 4px rgba(67,56,202,.08),0 4px 16px rgba(67,56,202,.06);
+  --shadow-md:0 4px 12px rgba(67,56,202,.12),0 8px 32px rgba(67,56,202,.08);
+  --trans:0.2s ease;
+}
+[data-theme=dark]{
+  --bg:#060C1A; --surf:#0F1629; --surf2:#131E35;
+  --bdr:#1E2D4A; --bdr2:#243354;
+  --txt:#F1F5F9; --txt2:#94A3B8; --txt3:#475569;
+  --sbar-bg:#080E1C; --sbar-txt:#8B9FC7;
+  --shadow:0 1px 4px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.4),0 8px 32px rgba(0,0,0,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;min-height:100vh;transition:background var(--trans),color var(--trans)}
+a{color:var(--pri);text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none}
+::selection{background:var(--pri-l);color:#fff}
 
-  --primary       : #1B5E20;
-  --primary-hover : #2E7D32;
-  --primary-light : #E8F5E9;
-  --gold          : #C9A84C;
-  --gold-light    : #FFF8E1;
-  --gold-hover    : #E5C670;
-  --danger        : #C62828;
-  --danger-light  : #FFEBEE;
-  --warning       : #E65100;
-  --warning-light : #FFF3E0;
-  --info          : #1565C0;
-  --info-light    : #E3F2FD;
-  --success       : #1B5E20;
-  --success-light : #E8F5E9;
+/* ═══ GLOBAL LOADER ═══════════════════════════ */
+#global-loader{position:fixed;top:0;left:0;right:0;z-index:9999;height:3px;background:linear-gradient(90deg,var(--pri),var(--acc));animation:load-bar 1.2s ease infinite}
+@keyframes load-bar{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
-  --bg            : #EFF3EF;
-  --card-bg       : #FFFFFF;
-  --header-bg     : #FFFFFF;
-  --text          : #1A2E1A;
-  --text-muted    : #5A7A5A;
-  --text-light    : #8FAC8F;
-  --border        : #D4E4D4;
-  --border-light  : #EBF2EB;
+/* ═══ TOAST ════════════════════════════════════ */
+#toasts{position:fixed;bottom:24px;right:24px;z-index:9998;display:flex;flex-direction:column;gap:10px;max-width:360px}
+.toast{padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:500;box-shadow:var(--shadow-md);transform:translateX(120%);transition:transform 0.3s ease;pointer-events:none;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateX(0)}
+.toast-info   {background:var(--surf);color:var(--txt);border-left:4px solid var(--pri)}
+.toast-success{background:#ECFDF5;color:#065F46;border-left:4px solid var(--ok)}
+.toast-error  {background:#FEF2F2;color:#991B1B;border-left:4px solid var(--err)}
+.toast-warn   {background:#FFFBEB;color:#92400E;border-left:4px solid var(--warn)}
+[data-theme=dark] .toast-success{background:#022C22;color:#6EE7B7}
+[data-theme=dark] .toast-error  {background:#2D0E0E;color:#FCA5A5}
+[data-theme=dark] .toast-warn   {background:#2D1C00;color:#FCD34D}
 
-  --shadow-sm     : 0 1px 4px rgba(0,0,0,0.06);
-  --shadow        : 0 2px 12px rgba(0,0,0,0.08);
-  --shadow-md     : 0 4px 20px rgba(0,0,0,0.10);
-  --radius-sm     : 6px;
-  --radius        : 10px;
-  --radius-lg     : 14px;
+/* ═══ AUTH PAGES ═══════════════════════════════ */
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(135deg,#1E1B4B 0%,#312E81 40%,#0E7490 100%)}
+.auth-card{background:var(--surf);border-radius:var(--r-lg);padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.auth-brand{text-align:center;margin-bottom:32px}
+.auth-logo{width:52px;height:52px;background:linear-gradient(135deg,var(--pri),var(--acc));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px}
+.auth-brand h1{font-size:22px;font-weight:800;color:var(--txt)}
+.auth-brand p{color:var(--txt2);font-size:13px;margin-top:4px}
+.auth-title{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--txt)}
+.auth-sub  {color:var(--txt2);font-size:13px;margin-bottom:24px}
+.auth-switch{text-align:center;margin-top:20px;color:var(--txt2);font-size:13px}
+.auth-switch a{color:var(--pri);font-weight:600}
+.pg-pending-body{text-align:center;padding:20px 0}
+.pg-pending-body .big-icon{font-size:48px;margin-bottom:16px}
 
-  --font          : -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
+/* ═══ FORM ELEMENTS ═════════════════════════════ */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.input{width:100%;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);background:var(--surf2);color:var(--txt);font-size:14px;transition:border-color var(--trans),box-shadow var(--trans)}
+.input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+select.input{cursor:pointer}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.hint-text{font-size:12px;color:var(--txt3);margin-top:8px;line-height:1.5}
 
-/* ══════════════════════════════════════════════
-   RESET & BASE
-══════════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body {
-  font-family: var(--font);
-  background : var(--bg);
-  color      : var(--text);
-  min-height : 100vh;
-  overflow-x : hidden;
-}
-a { text-decoration: none; color: inherit; }
-input, select, textarea, button { font-family: var(--font); font-size: 13px; }
-input:focus, select:focus, textarea:focus { outline: none; }
+/* ═══ BUTTONS ═══════════════════════════════════ */
+.btn{padding:9px 20px;border-radius:var(--r-sm);font-size:13px;font-weight:600;transition:all var(--trans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--pri);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--pri-d);transform:translateY(-1px);box-shadow:0 4px 12px rgba(67,56,202,.35)}
+.btn-ghost{background:transparent;color:var(--txt2);border:1.5px solid var(--bdr)}
+.btn-ghost:hover{background:var(--surf2);border-color:var(--bdr2)}
+.btn-ok {background:#ECFDF5;color:#065F46;border:1.5px solid #A7F3D0}
+.btn-ok:hover{background:#D1FAE5}
+.btn-err{background:#FEF2F2;color:#991B1B;border:1.5px solid #FCA5A5}
+.btn-err:hover{background:#FEE2E2}
+.btn-lg{padding:12px 28px;font-size:15px;border-radius:10px}
+.btn-full{width:100%;justify-content:center;padding:12px}
+.btn-icon{background:none;border:none;padding:4px 8px;border-radius:6px;font-size:13px;color:var(--txt3);transition:all var(--trans)}
+.btn-icon:hover{background:var(--surf2)}
+.btn-icon.danger:hover{background:#FEF2F2;color:var(--err)}
 
-/* ══════════════════════════════════════════════
-   LAYOUT
-══════════════════════════════════════════════ */
-#app {
-  display       : flex;
-  min-height    : 100vh;
-}
-#app.hidden { display: none; }
+/* ═══ APP SHELL ══════════════════════════════════ */
+#app{display:none;min-height:100vh}
+#app.visible{display:flex}
 
-/* ══════════════════════════════════════════════
-   SIDEBAR
-══════════════════════════════════════════════ */
-.sidebar {
-  width          : var(--sidebar-width);
-  min-height     : 100vh;
-  background     : var(--sidebar-bg);
-  display        : flex;
-  flex-direction : column;
-  position       : fixed;
-  top            : 0; left: 0;
-  z-index        : 100;
-  transition     : width .25s;
-  overflow       : hidden;
+#sidebar{
+  width:var(--sbar-w);position:fixed;top:0;left:0;bottom:0;
+  background:var(--sbar-bg);display:flex;flex-direction:column;z-index:100;
+  transition:transform var(--trans);overflow-y:auto;
 }
+.sidebar-brand{padding:22px 20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--pri-l),var(--acc));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.brand-name{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.brand-version{font-size:10px;color:var(--sbar-txt);display:block;margin-top:1px}
+.sidebar-nav{flex:1;padding:16px 12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r-sm);color:var(--sbar-txt);font-size:14px;font-weight:500;transition:all var(--trans);cursor:pointer;margin-bottom:2px;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.4)}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-sep{height:1px;background:rgba(255,255,255,.06);margin:12px 0}
+.sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,.08)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r-sm);margin-bottom:8px}
+.user-ava{width:34px;height:34px;background:linear-gradient(135deg,var(--pri-l),var(--acc));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.user-ava.sm{width:26px;height:26px;font-size:11px}
+#sidebar-name{font-size:13px;font-weight:600;color:#fff;line-height:1.3}
+#sidebar-email{font-size:11px;color:var(--sbar-txt);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+#sidebar-role{font-size:10px;color:var(--acc);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.sidebar-bottom-btns{display:flex;gap:6px}
+.sb-btn{flex:1;padding:8px;border-radius:var(--r-sm);font-size:12px;font-weight:600;background:rgba(255,255,255,.07);color:var(--sbar-txt);border:none;cursor:pointer;transition:all var(--trans);text-align:center}
+.sb-btn:hover{background:rgba(255,255,255,.14);color:#fff}
 
-.sidebar-brand {
-  display        : flex;
-  align-items    : center;
-  gap            : 10px;
-  padding        : 22px 18px 16px;
-  border-bottom  : 1px solid rgba(255,255,255,0.08);
-}
-.brand-icon { font-size: 26px; line-height: 1; }
-.brand-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: .3px; }
-.brand-sub  { font-size: 10px; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; }
+#main-content{margin-left:var(--sbar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.tab-content{padding:28px;flex:1;display:block}
+.tab-content[hidden]{display:none!important}
 
-.nav-list {
-  list-style  : none;
-  padding     : 10px 8px;
-  flex        : 1;
-  overflow-y  : auto;
-}
-.nav-list::-webkit-scrollbar { width: 3px; }
-.nav-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+/* ═══ MOBILE HEADER ══════════════════════════════ */
+#mob-header{display:none;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sbar-bg);position:sticky;top:0;z-index:90}
+.mob-brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:16px;font-weight:800}
+.mob-brand-icon{width:28px;height:28px;background:linear-gradient(135deg,var(--pri-l),var(--acc));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.mob-actions{display:flex;align-items:center;gap:8px}
+.mob-btn{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background var(--trans)}
+.mob-btn:hover{background:rgba(255,255,255,.2)}
 
-.nav-label {
-  font-size    : 9.5px;
-  font-weight  : 600;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color        : var(--sidebar-label);
-  padding      : 14px 10px 5px;
-}
-.nav-item {
-  display        : flex;
-  align-items    : center;
-  gap            : 10px;
-  padding        : 9px 10px;
-  border-radius  : var(--radius-sm);
-  color          : var(--sidebar-text);
-  cursor         : pointer;
-  transition     : all .15s;
-  font-size      : 13px;
-  font-weight    : 400;
-  border-left    : 3px solid transparent;
-  margin-bottom  : 1px;
-}
-.nav-item:hover  { background: var(--sidebar-hover); color: #fff; }
-.nav-item.active {
-  background : var(--sidebar-active);
-  color      : var(--gold);
-  border-color: var(--gold);
-  font-weight: 500;
-}
-.nav-item .ni { font-size: 15px; width: 20px; text-align: center; }
+/* ═══ BOTTOM NAV ═════════════════════════════════ */
+#bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--bdr);z-index:100;padding:4px 0 max(4px,env(safe-area-inset-bottom))}
+.bot-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;color:var(--txt3);font-size:10px;font-weight:500;background:none;border:none;cursor:pointer;transition:color var(--trans)}
+.bot-item.active{color:var(--pri)}
+.bot-item-icon{font-size:18px;line-height:1}
 
-.sidebar-footer {
-  padding      : 14px 12px;
-  border-top   : 1px solid rgba(255,255,255,0.08);
-  font-size    : 11px;
-  color        : var(--sidebar-label);
-  text-align   : center;
-}
-.sidebar-footer span { color: var(--gold); }
+/* ═══ PAGE STRUCTURE ════════════════════════════ */
+.page-header{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:800;color:var(--txt);line-height:1.2}
+.page-sub{font-size:13px;color:var(--txt2);margin-top:3px}
 
-/* ══════════════════════════════════════════════
-   MAIN CONTENT
-══════════════════════════════════════════════ */
-.main {
-  margin-left : var(--sidebar-width);
-  flex        : 1;
-  min-height  : 100vh;
-  display     : flex;
-  flex-direction: column;
-}
+/* ═══ CARDS ══════════════════════════════════════ */
+.card{background:var(--surf);border-radius:var(--r);padding:22px;box-shadow:var(--shadow);border:1px solid var(--bdr);margin-bottom:20px;transition:background var(--trans),border-color var(--trans)}
+.card-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-title{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:16px}
 
-/* TOP HEADER */
-.top-header {
-  background   : var(--header-bg);
-  border-bottom: 1px solid var(--border);
-  padding      : 14px 28px;
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-  position     : sticky;
-  top          : 0;
-  z-index      : 50;
-  box-shadow   : var(--shadow-sm);
-}
-.header-left h2 {
-  font-size  : 18px;
-  font-weight: 700;
-  color      : var(--text);
-}
-.header-left .breadcrumb {
-  font-size: 12px;
-  color    : var(--text-muted);
-  margin-top: 1px;
-}
-.header-right {
-  display    : flex;
-  align-items: center;
-  gap        : 10px;
-}
-.date-chip {
-  background : var(--primary-light);
-  color      : var(--primary);
-  padding    : 4px 10px;
-  border-radius: 20px;
-  font-size  : 12px;
-  font-weight: 500;
-}
-.hijri-chip {
-  background : var(--gold-light);
-  color      : #7B5800;
-  padding    : 4px 10px;
-  border-radius: 20px;
-  font-size  : 12px;
-  font-weight: 500;
-}
+/* ═══ BADGES ═════════════════════════════════════ */
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ok {background:#D1FAE5;color:#065F46}
+.badge-err{background:#FEE2E2;color:#991B1B}
+.badge-warn{background:#FEF3C7;color:#92400E}
+.badge-pri{background:#E0E7FF;color:#3730A3}
+[data-theme=dark] .badge-ok {background:#022C22;color:#6EE7B7}
+[data-theme=dark] .badge-err{background:#2D0E0E;color:#FCA5A5}
+[data-theme=dark] .badge-warn{background:#2D1C00;color:#FCD34D}
+[data-theme=dark] .badge-pri{background:#1E1B4B;color:#A5B4FC}
+.admin-tag{font-size:10px;font-weight:600;background:var(--pri);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
 
-/* ══════════════════════════════════════════════
-   BUTTONS
-══════════════════════════════════════════════ */
-.btn {
-  display       : inline-flex;
-  align-items   : center;
-  gap           : 6px;
-  padding       : 8px 16px;
-  border-radius : var(--radius-sm);
-  border        : none;
-  cursor        : pointer;
-  font-size     : 13px;
-  font-weight   : 500;
-  transition    : all .15s;
-  white-space   : nowrap;
-}
-.btn-primary  { background: var(--primary);   color: #fff; }
-.btn-primary:hover  { background: var(--primary-hover); }
-.btn-gold     { background: var(--gold);      color: #fff; }
-.btn-gold:hover     { background: var(--gold-hover); }
-.btn-danger   { background: var(--danger);    color: #fff; }
-.btn-danger:hover   { background: #B71C1C; }
-.btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-outline:hover  { background: var(--bg); }
-.btn-ghost    { background: transparent; color: var(--text-muted); }
-.btn-ghost:hover    { background: var(--bg); color: var(--text); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-icon { padding: 6px; border-radius: var(--radius-sm); border: none; cursor: pointer; transition: all .15s; background: transparent; }
-.btn-edit  { color: var(--info);   } .btn-edit:hover  { background: var(--info-light); }
-.btn-del   { color: var(--danger); } .btn-del:hover   { background: var(--danger-light); }
+/* ═══ LOADING / EMPTY ═══════════════════════════ */
+.loading-placeholder{display:flex;align-items:center;justify-content:center;min-height:300px}
+.spinner{width:36px;height:36px;border:3px solid var(--bdr2);border-top-color:var(--pri);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:60px 20px;color:var(--txt3)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.6}
 
-/* ══════════════════════════════════════════════
-   SECTION WRAPPER
-══════════════════════════════════════════════ */
-.content-area { padding: 24px 28px; flex: 1; }
+/* ═══ DASHBOARD ══════════════════════════════════ */
+.stats-top{display:grid;grid-template-columns:240px 1fr;gap:20px;margin-bottom:20px}
+.ring-card{background:var(--surf);border-radius:var(--r);padding:22px;box-shadow:var(--shadow);border:1px solid var(--bdr);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.progress-ring{width:130px;height:130px}
+.ring-pct{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:600}
+.ring-label{font-size:12px;font-weight:500;opacity:.7}
+.ring-info{text-align:center}
+.ring-hours{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:var(--pri)}
+.ring-hours span{font-size:14px;color:var(--txt2);font-weight:400}
+.ring-caption{font-size:12px;color:var(--txt2);margin-top:2px}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-card{background:var(--surf);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);border:1px solid var(--bdr);display:flex;align-items:center;gap:14px}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.si-cyan  {background:#ECFEFF;color:#0E7490}
+.si-amber {background:#FFFBEB;color:#B45309}
+.si-indigo{background:#EEF2FF;color:#4338CA}
+.si-green {background:#ECFDF5;color:#065F46}
+[data-theme=dark] .si-cyan  {background:#083344}
+[data-theme=dark] .si-amber {background:#2D1C00}
+[data-theme=dark] .si-indigo{background:#1E1B4B}
+[data-theme=dark] .si-green {background:#022C22}
+.stat-val{font-size:20px;font-weight:700;color:var(--txt);font-family:'JetBrains Mono',monospace;line-height:1.2}
+.stat-lbl{font-size:11px;color:var(--txt2);font-weight:500;margin-top:2px}
 
-.section { display: none; }
-.section.active { display: block; }
+.punch-live-badge{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surf);border:1.5px solid #A7F3D0;border-radius:20px;font-size:12px;font-weight:600;color:#065F46;box-shadow:var(--shadow)}
+[data-theme=dark] .punch-live-badge{background:#022C22;border-color:#065F46;color:#6EE7B7}
+.pulse-dot{width:8px;height:8px;background:var(--ok);border-radius:50%;animation:pdot 1.4s ease infinite;display:inline-block}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 
-/* ══════════════════════════════════════════════
-   CARDS
-══════════════════════════════════════════════ */
-.card {
-  background   : var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow);
-  border       : 1px solid var(--border-light);
-}
-.card-header {
-  padding      : 16px 20px 14px;
-  border-bottom: 1px solid var(--border-light);
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-}
-.card-title    { font-size: 14px; font-weight: 600; color: var(--text); }
-.card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.card-body     { padding: 18px 20px; }
-.card-footer   { padding: 12px 20px; border-top: 1px solid var(--border-light); background: #FAFCFA; border-radius: 0 0 var(--radius) var(--radius); }
+/* ═══ WEEK GRID ══════════════════════════════════ */
+.week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.day-cell{background:var(--surf2);border:1.5px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;transition:all var(--trans)}
+.day-cell.today{border-color:var(--pri-l);background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(6,182,212,.04));box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.day-cell.absent:not(.future){border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.03)}
+.day-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2)}
+.day-date{font-size:16px;font-weight:800;color:var(--txt);margin:4px 0 8px;font-family:'JetBrains Mono',monospace}
+.day-in {font-size:11px;color:var(--ok);font-weight:600}
+.day-out{font-size:11px;color:var(--txt2);font-weight:600}
+.day-out.pending{color:var(--warn)}
+.day-hrs{font-size:12px;font-weight:700;margin-top:6px;padding:2px 8px;border-radius:10px;display:inline-block}
+.hrs-ok {background:#D1FAE5;color:#065F46}
+.hrs-low{background:#FEF3C7;color:#92400E}
+.day-future{color:var(--txt3);font-size:18px;margin-top:4px}
+.day-absent{font-size:11px;color:var(--err);font-weight:600;opacity:.7;margin-top:4px}
+[data-theme=dark] .day-cell{background:var(--surf2)}
+[data-theme=dark] .hrs-ok {background:#022C22;color:#6EE7B7}
+[data-theme=dark] .hrs-low{background:#2D1C00;color:#FCD34D}
 
-/* STAT CARDS */
-.stat-cards {
-  display              : grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap                  : 16px;
-  margin-bottom        : 20px;
-}
-.stat-card {
-  background   : var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow);
-  border       : 1px solid var(--border-light);
-  padding      : 18px 20px;
-  position     : relative;
-  overflow     : hidden;
-}
-.stat-card::before {
-  content   : '';
-  position  : absolute;
-  top       : 0; left: 0; right: 0;
-  height    : 3px;
-  background: var(--accent-color, var(--primary));
-}
-.stat-card .sc-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; }
-.stat-card .sc-value { font-size: 22px; font-weight: 700; color: var(--text); margin: 6px 0 2px; }
-.stat-card .sc-sub   { font-size: 11px; color: var(--text-light); }
-.stat-card .sc-icon  { position: absolute; right: 14px; top: 14px; font-size: 28px; opacity: .15; }
-.sc-total  { --accent-color: var(--primary); }
-.sc-nisab  { --accent-color: var(--gold); }
-.sc-due    { --accent-color: #E53935; }
-.sc-paid   { --accent-color: #2E7D32; }
+/* ═══ LAST MONTH CARD ════════════════════════════ */
+.card-warn{border-left:4px solid var(--warn)}
+.card-ok  {border-left:4px solid var(--ok)}
+.lm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.lm-icon{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-right:8px}
+.lm-icon.ok {background:#D1FAE5;color:#065F46}
+.lm-icon.err{background:#FEE2E2;color:#991B1B}
+.lm-title{font-size:15px;font-weight:700;color:var(--txt)}
+.deduction-badge{padding:5px 14px;background:var(--err);color:#fff;border-radius:20px;font-size:12px;font-weight:700}
+.ok-badge{padding:5px 14px;background:var(--ok);color:#fff;border-radius:20px;font-size:12px;font-weight:700}
+.lm-stats{display:flex;flex-wrap:wrap;gap:16px}
+.lm-stats > div{display:flex;flex-direction:column;gap:2px}
+.lm-stats span{font-size:11px;color:var(--txt2);font-weight:500}
+.lm-stats strong{font-size:14px;font-weight:700;color:var(--txt)}
+.text-err{color:var(--err)}
+.text-muted{color:var(--txt2)}
 
-/* BREAKDOWN CARDS */
-.breakdown-grid {
-  display              : grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap                  : 10px;
-  margin-bottom        : 20px;
-}
-.bd-card {
-  background   : var(--card-bg);
-  border-radius: var(--radius-sm);
-  padding      : 12px 14px;
-  border       : 1px solid var(--border-light);
-  box-shadow   : var(--shadow-sm);
-}
-.bd-card .bd-label { font-size: 10px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
-.bd-card .bd-val   { font-size: 14px; font-weight: 700; margin-top: 4px; }
-.bd-card .bd-icon  { font-size: 18px; margin-bottom: 4px; }
-.bd-gold    { border-top: 2px solid var(--gold); }
-.bd-silver  { border-top: 2px solid #90A4AE; }
-.bd-dep     { border-top: 2px solid #42A5F5; }
-.bd-icap    { border-top: 2px solid #66BB6A; }
-.bd-imon    { border-top: 2px solid #FFA726; }
-.bd-lrec    { border-top: 2px solid #AB47BC; }
-.bd-lpay    { border-top: 2px solid #EF5350; }
+/* ═══ PUNCH PAGE ═════════════════════════════════ */
+.punch-page{max-width:680px;margin:0 auto}
+.clock-card{background:linear-gradient(135deg,var(--sbar-bg) 0%,#312E81 100%);border-radius:var(--r-lg);padding:28px;text-align:center;margin-bottom:20px;box-shadow:var(--shadow-md)}
+.clock-time{font-family:'JetBrains Mono',monospace;font-size:52px;font-weight:600;color:#fff;letter-spacing:.06em;line-height:1}
+.clock-date{font-size:13px;color:rgba(255,255,255,.6);margin-top:8px}
+.punch-center{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:24px}
+.elapsed-label{font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px}
+.elapsed-time{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:600;color:var(--warn);letter-spacing:.06em}
+.punch-btn{width:160px;height:160px;border-radius:50%;font-size:15px;font-weight:800;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;letter-spacing:.5px;transition:transform .15s ease,box-shadow .15s ease;position:relative}
+.punch-btn:active{transform:scale(.95)}
+.punch-icon{font-size:28px;line-height:1;display:block}
+.punch-in-btn {background:linear-gradient(135deg,#059669,var(--ok));color:#fff;box-shadow:0 0 0 0 rgba(16,185,129,.5);animation:punch-pulse 2.2s ease infinite}
+.punch-out-btn{background:linear-gradient(135deg,#DC2626,var(--err));color:#fff;box-shadow:0 0 0 0 rgba(239,68,68,.5);animation:punch-pulse-r 2.2s ease infinite}
+.punch-correction-btn{background:var(--surf);color:var(--pri);border:2px solid var(--bdr2);font-size:13px;width:140px;height:56px;border-radius:12px;animation:none}
+@keyframes punch-pulse  {0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 18px rgba(16,185,129,0)}}
+@keyframes punch-pulse-r{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 18px rgba(239,68,68,0)}}
+.punch-since{font-size:12px;color:var(--txt2)}
+.punch-hint {font-size:12px;color:var(--txt3)}
+.done-badge{font-size:22px;font-weight:800;color:var(--ok)}
+.done-summary{text-align:center;color:var(--txt2);font-size:14px}
+.done-hours{font-weight:700;color:var(--txt);font-size:16px;margin-top:4px}
+.punch-record-card{margin-bottom:20px}
+.punch-record-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pr-item{display:flex;flex-direction:column;gap:2px}
+.pr-item span{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);font-weight:600}
+.pr-item strong{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--txt)}
+.pr-sep{color:var(--txt3);font-size:18px;font-weight:300}
+.manual-form{display:flex;flex-direction:column;gap:12px}
 
-/* ══════════════════════════════════════════════
-   SECTION HEADER
-══════════════════════════════════════════════ */
-.sec-header {
-  display        : flex;
-  align-items    : flex-start;
-  justify-content: space-between;
-  margin-bottom  : 16px;
-}
-.sec-header h3   { font-size: 16px; font-weight: 700; }
-.sec-header p    { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.sec-actions     { display: flex; gap: 8px; align-items: center; }
+/* ═══ HISTORY ════════════════════════════════════ */
+.history-list{display:flex;flex-direction:column;gap:12px}
+.week-card{background:var(--surf);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--bdr)}
+.week-card.week-met {border-left:4px solid var(--ok)}
+.week-card.week-missed{border-left:4px solid var(--warn)}
+.week-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;cursor:pointer;gap:12px;flex-wrap:wrap;transition:background var(--trans)}
+.week-header:hover{background:var(--surf2)}
+.week-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.week-dates{font-size:12px;color:var(--txt2)}
+.week-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.week-hrs{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--txt)}
+.wk-target{font-size:12px;color:var(--txt2);font-weight:400}
+.week-bar-outer{width:120px;height:6px;background:var(--bdr);border-radius:3px;overflow:hidden}
+.week-bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.bar-ok {background:linear-gradient(90deg,var(--ok),#34D399)}
+.bar-err{background:linear-gradient(90deg,var(--warn),var(--err))}
+.week-chevron{color:var(--txt3);font-size:11px;transition:transform var(--trans)}
+.week-details{padding:0 18px 18px;border-top:1px solid var(--bdr);margin-top:0}
+.day-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.dt-head{display:grid;grid-template-columns:50px 70px 70px 70px 1fr;padding:6px 10px;background:var(--surf2);border-radius:8px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.dt-row {display:grid;grid-template-columns:50px 70px 70px 70px 1fr;padding:8px 10px;border-radius:6px;transition:background var(--trans);align-items:center}
+.dt-row:hover{background:var(--surf2)}
+.dt-row.dt-absent{opacity:.5}
+.dt-day{font-weight:600;color:var(--txt)}
+.dt-hrs{font-weight:600;color:var(--pri);font-family:'JetBrains Mono',monospace}
+.week-summary-row{display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);font-size:12px;color:var(--txt2);flex-wrap:wrap;gap:8px}
 
-/* ══════════════════════════════════════════════
-   TABLES
-══════════════════════════════════════════════ */
-.table-wrap {
-  overflow-x: auto;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-light);
-}
-table {
-  width          : 100%;
-  border-collapse: collapse;
-  background     : var(--card-bg);
-}
-thead th {
-  background    : var(--primary);
-  color         : #fff;
-  padding       : 11px 14px;
-  font-size     : 11.5px;
-  font-weight   : 600;
-  text-align    : left;
-  white-space   : nowrap;
-  letter-spacing: .4px;
-}
-thead th:first-child { border-radius: var(--radius) 0 0 0; }
-thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
-tbody tr {
-  border-bottom: 1px solid var(--border-light);
-  transition   : background .1s;
-}
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: #F8FBF8; }
-tbody td {
-  padding   : 10px 14px;
-  font-size : 13px;
-  color     : var(--text);
-  vertical-align: middle;
-}
-.td-num  { text-align: right; font-variant-numeric: tabular-nums; font-family: 'Courier New', monospace; font-size: 12.5px; }
-.td-ser  { color: var(--text-muted); font-size: 12px; width: 40px; }
-.td-act  { width: 80px; text-align: center; }
-tfoot td {
-  padding    : 11px 14px;
-  font-weight: 700;
-  font-size  : 13px;
-  background : var(--primary-light);
-  color      : var(--primary);
-  border-top : 2px solid var(--primary);
-}
-.tfoot-num { text-align: right; }
-.empty-row td {
-  text-align: center;
-  padding   : 40px;
-  color     : var(--text-muted);
-  font-size : 13px;
-}
-.empty-row .empty-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+/* ═══ SETTINGS ═══════════════════════════════════ */
+.settings-section{margin-bottom:0}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.day-checkboxes{display:flex;flex-wrap:wrap;gap:8px}
+.day-check{padding:8px 16px;border:1.5px solid var(--bdr);border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt2);transition:all var(--trans);display:flex;align-items:center;gap:6px}
+.day-check input[type=checkbox]{appearance:none;width:0;margin:0;padding:0}
+.day-check.checked,.day-check:has(input:checked){background:var(--pri);border-color:var(--pri);color:#fff}
+.add-holiday-form{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:flex-end}
+.add-holiday-form .input{flex:1;min-width:140px}
+.holidays-list{display:flex;flex-direction:column;gap:6px}
+.hol-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr);font-size:13px}
+.hol-item.hol-deductible{border-left:3px solid var(--err)}
+.hol-type{margin-left:8px;font-size:11px;background:var(--surf);border:1px solid var(--bdr);padding:1px 7px;border-radius:10px;color:var(--txt2)}
+.hol-reason{margin-left:8px;color:var(--txt2);font-size:12px}
+.settings-save-bar{position:sticky;bottom:0;background:var(--bg);padding:16px 0;border-top:1px solid var(--bdr);margin-top:4px}
 
-/* TABLE INFO BAR */
-.table-info {
-  display        : flex;
-  align-items    : center;
-  justify-content: space-between;
-  padding        : 8px 14px;
-  background     : var(--primary-light);
-  border-radius  : var(--radius-sm) var(--radius-sm) 0 0;
-  border         : 1px solid var(--border-light);
-  border-bottom  : none;
-}
-.table-info span { font-size: 12px; color: var(--primary); font-weight: 500; }
+/* ═══ ADMIN ══════════════════════════════════════ */
+.user-approval-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--bdr);gap:12px;flex-wrap:wrap}
+.user-approval-row:last-child{border-bottom:none}
+.user-info{display:flex;align-items:flex-start;gap:12px}
+.user-name{font-size:14px;font-weight:600;color:var(--txt)}
+.user-email{font-size:12px;color:var(--txt2)}
+.user-phone{font-size:12px;color:var(--txt2)}
+.user-meta{font-size:11px;color:var(--txt3);margin-top:4px}
+.approval-btns{display:flex;gap:8px;flex-shrink:0}
+.users-table{border-collapse:collapse;width:100%}
+.ut-head{display:grid;grid-template-columns:1.5fr 2fr 80px 90px 100px;padding:8px 12px;background:var(--surf2);border-radius:8px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;gap:8px}
+.ut-row {display:grid;grid-template-columns:1.5fr 2fr 80px 90px 100px;padding:10px 12px;border-radius:6px;transition:background var(--trans);align-items:center;gap:8px;font-size:13px}
+.ut-row:hover{background:var(--surf2)}
+.ut-name{display:flex;align-items:center;gap:8px;font-weight:500}
+.ut-email{color:var(--txt2);font-size:12px;word-break:break-all}
 
-/* BADGES */
-.badge {
-  display      : inline-block;
-  padding      : 2px 8px;
-  border-radius: 12px;
-  font-size    : 11px;
-  font-weight  : 600;
-  white-space  : nowrap;
-}
-.badge-active    { background: var(--success-light); color: var(--success); }
-.badge-completed { background: var(--info-light);    color: var(--info); }
-.badge-draft     { background: #F5F5F5;              color: #616161; }
-.badge-yes       { background: var(--success-light); color: var(--success); }
-.badge-no        { background: var(--danger-light);  color: var(--danger); }
-.badge-gold      { background: var(--gold-light);    color: #7B5800; }
+/* ═══ DARK MODE OVERRIDES ════════════════════════ */
+[data-theme=dark] .lm-icon.ok {background:#022C22;color:#6EE7B7}
+[data-theme=dark] .lm-icon.err{background:#2D0E0E;color:#FCA5A5}
+[data-theme=dark] .si-cyan,.si-amber,.si-indigo,.si-green{filter:brightness(.85)}
+[data-theme=dark] .day-check.checked,[data-theme=dark] .day-check:has(input:checked){filter:brightness(1.1)}
 
-/* ══════════════════════════════════════════════
-   FORMS
-══════════════════════════════════════════════ */
-.form-grid { display: grid; gap: 14px; }
-.form-grid-2 { grid-template-columns: 1fr 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-label {
-  font-size  : 12px;
-  font-weight: 600;
-  color      : var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: .5px;
+/* ═══ RESPONSIVE ═════════════════════════════════ */
+@media (max-width:768px){
+  :root{--sbar-w:0px}
+  #sidebar{display:none!important}
+  #main-content{margin-left:0;padding-bottom:72px}
+  #mob-header{display:flex}
+  #bot-nav{display:flex}
+  .tab-content{padding:16px}
+  .stats-top{grid-template-columns:1fr}
+  .mini-stats{grid-template-columns:1fr 1fr}
+  .ring-card{flex-direction:row;gap:20px;padding:18px}
+  .week-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .ut-head,.ut-row{grid-template-columns:1.2fr 1.5fr 70px}
+  .ut-head span:nth-child(4),.ut-head span:nth-child(5),
+  .ut-row span:nth-child(4),.ut-row span:nth-child(5){display:none}
+  .page-title{font-size:18px}
+  .clock-time{font-size:36px}
+  #toasts{right:12px;left:12px;bottom:80px}
+  .form-row{grid-template-columns:1fr}
+  .dt-head,.dt-row{grid-template-columns:45px 65px 60px 60px 1fr;font-size:12px}
+  .settings-save-bar{padding-bottom:80px}
 }
-.form-control {
-  padding      : 9px 12px;
-  border       : 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  background   : var(--card-bg);
-  color        : var(--text);
-  font-size    : 13px;
-  transition   : border-color .15s;
-  width        : 100%;
-}
-.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(27,94,32,.1); }
-.form-control.auto-fill { background: var(--primary-light); color: var(--primary); }
-.form-hint { font-size: 11px; color: var(--text-light); }
-.form-section-title {
-  font-size    : 11px;
-  font-weight  : 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color        : var(--text-muted);
-  padding-bottom: 6px;
-  border-bottom : 1px solid var(--border-light);
-  margin-bottom : 4px;
-  grid-column  : 1 / -1;
-}
-
-/* TOGGLE */
-.toggle-group { display: flex; align-items: center; gap: 8px; }
-.toggle-label  { font-size: 13px; color: var(--text); }
-.toggle {
-  position : relative;
-  width    : 38px;
-  height   : 20px;
-  flex-shrink: 0;
-}
-.toggle input { display: none; }
-.toggle-slider {
-  position     : absolute;
-  inset        : 0;
-  background   : #CCC;
-  border-radius: 20px;
-  cursor       : pointer;
-  transition   : .2s;
-}
-.toggle-slider::before {
-  content      : '';
-  position     : absolute;
-  width        : 14px; height: 14px;
-  left         : 3px; top: 3px;
-  background   : white;
-  border-radius: 50%;
-  transition   : .2s;
-}
-.toggle input:checked + .toggle-slider { background: var(--primary); }
-.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
-
-/* ══════════════════════════════════════════════
-   MODAL
-══════════════════════════════════════════════ */
-.modal-overlay {
-  position        : fixed;
-  inset           : 0;
-  background      : rgba(0,0,0,0.5);
-  backdrop-filter : blur(3px);
-  z-index         : 500;
-  display         : flex;
-  align-items     : center;
-  justify-content : center;
-  padding         : 20px;
-  animation       : fadeIn .15s;
-}
-.modal-overlay.hidden { display: none; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.modal {
-  background   : var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow   : var(--shadow-md);
-  width        : 100%;
-  max-width    : 540px;
-  max-height   : 90vh;
-  display      : flex;
-  flex-direction: column;
-  animation    : slideUp .2s;
-}
-.modal-wide { max-width: 680px; }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-.modal-header {
-  padding      : 18px 22px 14px;
-  border-bottom: 1px solid var(--border-light);
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-}
-.modal-title   { font-size: 16px; font-weight: 700; }
-.modal-close {
-  background: transparent; border: none; cursor: pointer;
-  color: var(--text-muted); font-size: 18px; padding: 4px 8px;
-  border-radius: var(--radius-sm); transition: all .1s;
-}
-.modal-close:hover { background: var(--bg); color: var(--text); }
-.modal-body    { padding: 20px 22px; overflow-y: auto; }
-.modal-footer  {
-  padding      : 14px 22px;
-  border-top   : 1px solid var(--border-light);
-  display      : flex;
-  gap          : 10px;
-  justify-content: flex-end;
-  background   : #FAFCFA;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
-
-/* ══════════════════════════════════════════════
-   NISAB / PROGRESS
-══════════════════════════════════════════════ */
-.nisab-bar-wrap {
-  background   : var(--border-light);
-  border-radius: 20px;
-  height       : 8px;
-  overflow     : hidden;
-  margin       : 6px 0;
-}
-.nisab-bar {
-  height      : 100%;
-  border-radius: 20px;
-  background  : var(--primary);
-  transition  : width .5s ease;
-  min-width   : 4px;
-}
-.nisab-bar.over { background: var(--gold); }
-
-/* ══════════════════════════════════════════════
-   MARKET GRID
-══════════════════════════════════════════════ */
-.market-grid {
-  display              : grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap                  : 14px;
-}
-.mkt-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 14px 16px;
-  box-shadow   : var(--shadow-sm);
-}
-.mkt-type  { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-.mkt-karat { font-size: 20px; font-weight: 800; color: var(--text); margin: 2px 0; }
-.mkt-price { font-size: 15px; font-weight: 700; color: var(--primary); }
-.mkt-price span { font-size: 11px; color: var(--text-muted); font-weight: 400; }
-.mkt-updated { font-size: 10px; color: var(--text-light); margin-top: 4px; }
-.mkt-gold   { border-top: 3px solid var(--gold); }
-.mkt-silver { border-top: 3px solid #90A4AE; }
-.mkt-edit-row { display: flex; gap: 6px; margin-top: 10px; }
-.mkt-edit-row input {
-  flex: 1; padding: 5px 8px;
-  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-  font-size: 12px;
-}
-.mkt-edit-row input:focus { border-color: var(--primary); }
-.mkt-edit-row button { flex-shrink: 0; }
-
-/* ══════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════ */
-#toast-wrap {
-  position   : fixed;
-  bottom     : 24px;
-  right      : 24px;
-  z-index    : 9999;
-  display    : flex;
-  flex-direction: column;
-  gap        : 8px;
-}
-.toast {
-  display      : flex;
-  align-items  : center;
-  gap          : 10px;
-  padding      : 12px 16px;
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow-md);
-  font-size    : 13px;
-  font-weight  : 500;
-  animation    : toastIn .25s;
-  min-width    : 260px;
-  max-width    : 380px;
-}
-@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
-.toast-success { background: #1B5E20; color: #fff; }
-.toast-error   { background: #C62828; color: #fff; }
-.toast-info    { background: #1565C0; color: #fff; }
-.toast-warning { background: #E65100; color: #fff; }
-.toast-icon    { font-size: 16px; }
-
-/* ══════════════════════════════════════════════
-   LOADER
-══════════════════════════════════════════════ */
-#loader {
-  position  : fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(4px);
-  z-index   : 1000;
-  display   : flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap       : 14px;
-}
-#loader.hidden { display: none; }
-.spinner {
-  width : 42px; height: 42px;
-  border: 4px solid rgba(255,255,255,0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-msg { color: #fff; font-size: 14px; font-weight: 500; }
-
-/* ══════════════════════════════════════════════
-   SETUP OVERLAY
-══════════════════════════════════════════════ */
-#setup-overlay {
-  position  : fixed; inset: 0;
-  background: linear-gradient(135deg, #0C1E10 0%, #1B3A20 60%, #0A1A0D 100%);
-  z-index   : 2000;
-  display   : flex;
-  align-items: center;
-  justify-content: center;
-  padding   : 20px;
-}
-#setup-overlay.hidden { display: none; }
-
-.setup-card {
-  background   : rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-  border       : 1px solid rgba(255,255,255,0.12);
-  border-radius: 20px;
-  padding      : 42px 40px 36px;
-  width        : 100%;
-  max-width    : 480px;
-  text-align   : center;
-}
-.setup-logo { font-size: 56px; margin-bottom: 12px; }
-.setup-card h1 { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-.setup-card > p { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 28px; }
-.setup-steps {
-  text-align   : left;
-  margin-bottom: 24px;
-  background   : rgba(255,255,255,0.04);
-  border-radius: 10px;
-  padding      : 16px 18px;
-}
-.setup-steps h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 10px; }
-.setup-steps ol { padding-left: 18px; }
-.setup-steps li { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.8; }
-.setup-steps code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #80CBC4; }
-
-.setup-input {
-  width        : 100%;
-  padding      : 12px 16px;
-  border       : 1.5px solid rgba(255,255,255,0.15);
-  border-radius: 10px;
-  background   : rgba(255,255,255,0.07);
-  color        : #fff;
-  font-size    : 13px;
-  margin-bottom: 12px;
-}
-.setup-input::placeholder { color: rgba(255,255,255,0.3); }
-.setup-input:focus { outline: none; border-color: var(--gold); }
-
-.setup-btn {
-  width        : 100%;
-  padding      : 12px;
-  background   : var(--gold);
-  color        : #1A0F00;
-  border       : none;
-  border-radius: 10px;
-  font-size    : 14px;
-  font-weight  : 700;
-  cursor       : pointer;
-  transition   : all .15s;
-}
-.setup-btn:hover { background: var(--gold-hover); transform: translateY(-1px); }
-.setup-error { color: #FF8A80; font-size: 12px; margin-top: 8px; }
-
-/* ══════════════════════════════════════════════
-   SETTINGS PAGE
-══════════════════════════════════════════════ */
-.settings-grid {
-  display              : grid;
-  grid-template-columns: 1fr 1fr;
-  gap                  : 18px;
-}
-.settings-section { margin-bottom: 6px; }
-.settings-section .ss-title {
-  font-size    : 11px;
-  font-weight  : 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color        : var(--text-muted);
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom : 2px solid var(--primary);
-  display      : inline-block;
-}
-
-/* TIMEFRAME CARDS */
-.tf-list { display: flex; flex-direction: column; gap: 10px; }
-.tf-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 16px 18px;
-  box-shadow   : var(--shadow-sm);
-  display      : grid;
-  grid-template-columns: 1fr auto;
-  gap          : 8px;
-  align-items  : start;
-}
-.tf-card.tf-active { border-left: 3px solid var(--gold); }
-.tf-label   { font-size: 14px; font-weight: 700; }
-.tf-dates   { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.tf-meta    { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-.tf-meta span { font-size: 11px; color: var(--text-light); }
-.tf-meta b  { color: var(--text); }
-.tf-actions { display: flex; gap: 6px; }
-
-/* RECENT PAYMENTS TABLE */
-.rpay-table { width: 100%; border-collapse: collapse; }
-.rpay-table th { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .5px; }
-.rpay-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--border-light); }
-.rpay-table tr:last-child td { border-bottom: none; }
-
-/* LIFETIME HISTORY */
-.history-grid {
-  display              : grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap                  : 14px;
-  margin-bottom        : 20px;
-}
-.hist-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 14px 16px;
-  box-shadow   : var(--shadow-sm);
-  text-align   : center;
-}
-.hist-card .hc-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .8px; }
-.hist-card .hc-val   { font-size: 20px; font-weight: 800; margin-top: 6px; }
-.hist-card .hc-sub   { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-.hc-green { color: var(--primary); }
-.hc-gold  { color: var(--gold); }
-.hc-red   { color: var(--danger); }
-
-/* CONFIRM MODAL */
-.confirm-msg { font-size: 14px; color: var(--text); text-align: center; padding: 10px 0; }
-.confirm-msg .confirm-icon { font-size: 40px; display: block; margin-bottom: 10px; }
-
-/* MISC */
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.text-muted  { color: var(--text-muted); }
-.fw-bold     { font-weight: 700; }
-.mb-16       { margin-bottom: 16px; }
-.mb-20       { margin-bottom: 20px; }
-.mt-16       { margin-top: 16px; }
-.gap-8       { gap: 8px; }
-.flex        { display: flex; align-items: center; }
-.flex-between{ display: flex; align-items: center; justify-content: space-between; }
-.grid-2      { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.nisab-met   { color: var(--success); font-weight: 700; }
-.nisab-unmet { color: var(--danger); font-weight: 700; }
-
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* ══════════════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  .stat-cards       { grid-template-columns: repeat(2, 1fr); }
-  .breakdown-grid   { grid-template-columns: repeat(4, 1fr); }
-  .settings-grid    { grid-template-columns: 1fr; }
-  .market-grid      { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 640px) {
-  :root { --sidebar-width: 0px; }
-  .sidebar { transform: translateX(-240px); }
-  .sidebar.open { transform: none; width: 240px; }
-  .main { margin-left: 0; }
-  .stat-cards       { grid-template-columns: 1fr 1fr; }
-  .breakdown-grid   { grid-template-columns: repeat(2, 1fr); }
-  .history-grid     { grid-template-columns: 1fr; }
-  .content-area     { padding: 16px; }
-  .form-grid-2      { grid-template-columns: 1fr; }
+@media(max-width:420px){
+  .stats-top{gap:12px}
+  .mini-stats{grid-template-columns:1fr 1fr}
+  .stat-card{padding:12px 10px;gap:10px}
+  .stat-val{font-size:16px}
+  .week-bar-outer{width:80px}
 }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     SETUP OVERLAY (first run)
-══════════════════════════════════════════ -->
-<div id="setup-overlay">
-  <div class="setup-card">
-    <div class="setup-logo">☪️</div>
-    <h1>Zakat Tracker</h1>
-    <p>Your personal Zakat calculation & tracking system</p>
+<!-- ── TOAST CONTAINER ──────────────────────────── -->
+<div id="toasts"></div>
 
-    <div class="setup-steps">
-      <h4>📋 Backend Setup (one-time)</h4>
-      <ol>
-        <li>Create a new <b>Google Spreadsheet</b></li>
-        <li>Go to <b>Extensions → Apps Script</b></li>
-        <li>Paste the <code>Code.gs</code> file contents &amp; Save</li>
-        <li>Run <code>setupAll()</code> from the Run menu</li>
-        <li>Deploy as <b>Web App</b> (Anyone access) &amp; copy the URL</li>
-      </ol>
+<!-- ── GLOBAL LOADER ────────────────────────────── -->
+<div id="global-loader" hidden></div>
+
+<!-- ══════════════ AUTH PAGES ═════════════════════ -->
+<div id="auth" hidden>
+
+  <!-- Login -->
+  <div id="pg-login">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo">⏱</div>
+        <h1>PunchTrack</h1>
+        <p>Office Time Management System</p>
+      </div>
+      <h2 class="auth-title">Sign In</h2>
+      <p class="auth-sub">Use your registered email and password.</p>
+      <form onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input id="login-email" type="email" class="input" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="login-pass" type="password" class="input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button id="login-btn" class="btn btn-primary btn-full" type="submit">Sign In</button>
+      </form>
+      <div class="auth-switch">Don't have an account? <a href="#" onclick="showAuthPage('pg-register');return false">Register here</a></div>
     </div>
-
-    <input id="gas-url-input" type="url" class="setup-input"
-      placeholder="https://script.google.com/macros/s/…/exec">
-    <button class="setup-btn" onclick="connectGAS()">⚡ Connect &amp; Initialize</button>
-    <div id="setup-error" class="setup-error"></div>
   </div>
+
+  <!-- Register -->
+  <div id="pg-register" hidden>
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo">⏱</div>
+        <h1>PunchTrack</h1>
+      </div>
+      <h2 class="auth-title">Create Account</h2>
+      <p class="auth-sub">Fill in your details. An admin will approve your account.</p>
+      <form onsubmit="doRegister(event)">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input id="reg-name" type="text" class="input" placeholder="Your full name" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address *</label>
+          <input id="reg-email" type="email" class="input" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input id="reg-phone" type="tel" class="input" placeholder="+880 1X XX XXX XXX">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Password *</label>
+            <input id="reg-pass" type="password" class="input" placeholder="Min 6 chars" required>
+          </div>
+          <div class="form-group">
+            <label>Confirm Password *</label>
+            <input id="reg-pass2" type="password" class="input" placeholder="Repeat password" required>
+          </div>
+        </div>
+        <button id="reg-btn" class="btn btn-primary btn-full" type="submit">Create Account</button>
+      </form>
+      <div class="auth-switch">Already have an account? <a href="#" onclick="showAuthPage('pg-login');return false">Sign in</a></div>
+    </div>
+  </div>
+
+  <!-- Email Verification -->
+  <div id="pg-verify" hidden>
+    <div class="auth-card" style="text-align:center">
+      <div class="auth-brand"><div class="auth-logo">✉</div><h1>PunchTrack</h1></div>
+      <div style="font-size:32px;margin-bottom:12px" id="verify-icon">⏳</div>
+      <p id="verify-status" style="color:var(--txt2);margin-bottom:24px">Verifying…</p>
+      <a href="?" id="verify-login-btn" class="btn btn-primary" hidden>Go to Login</a>
+    </div>
+  </div>
+
+  <!-- Pending Approval -->
+  <div id="pg-pending" hidden>
+    <div class="auth-card">
+      <div class="auth-brand"><div class="auth-logo">⏱</div><h1>PunchTrack</h1></div>
+      <div class="pg-pending-body">
+        <div class="big-icon">🕐</div>
+        <h2 class="auth-title">Account Pending</h2>
+        <p style="color:var(--txt2);font-size:14px;margin-bottom:20px">Your account is verified and awaiting admin approval. You'll receive an email once approved.</p>
+        <button class="btn btn-ghost" onclick="showAuthPage('pg-login')">← Back to Login</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- ══════════════════════════════════════════
-     MAIN APP
-══════════════════════════════════════════ -->
-<div id="app" class="hidden">
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
+<!-- ══════════════ MAIN APP ════════════════════════ -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-icon">☪️</span>
+      <div class="brand-icon">⏱</div>
       <div>
-        <div class="brand-name">Zakat Tracker</div>
-        <div class="brand-sub">Zakat Manager</div>
+        <span class="brand-name">PunchTrack</span>
+        <span class="brand-version">Office Time Manager</span>
       </div>
     </div>
 
-    <ul class="nav-list">
-      <li><div class="nav-item active" onclick="navigate('dashboard')" data-sec="dashboard">
-        <span class="ni">🏠</span> Dashboard
-      </div></li>
-
-      <li><div class="nav-label">WEALTH ASSETS</div></li>
-      <li><div class="nav-item" onclick="navigate('gold')" data-sec="gold">
-        <span class="ni">🏅</span> Gold
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('silver')" data-sec="silver">
-        <span class="ni">🥈</span> Silver
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('deposits')" data-sec="deposits">
-        <span class="ni">🏦</span> Deposits
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('invCap')" data-sec="invCap">
-        <span class="ni">📈</span> Capital Invest.
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('invMon')" data-sec="invMon">
-        <span class="ni">💹</span> Monthly Invest.
-      </div></li>
-
-      <li><div class="nav-label">LOANS</div></li>
-      <li><div class="nav-item" onclick="navigate('loanRec')" data-sec="loanRec">
-        <span class="ni">📤</span> Receivable
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('loanPay')" data-sec="loanPay">
-        <span class="ni">📥</span> Payable
-      </div></li>
-
-      <li><div class="nav-label">REFERENCE</div></li>
-      <li><div class="nav-item" onclick="navigate('market')" data-sec="market">
-        <span class="ni">📊</span> Market Values
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('timeframes')" data-sec="timeframes">
-        <span class="ni">📅</span> Timeframes
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('payments')" data-sec="payments">
-        <span class="ni">💸</span> Payments
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('settings')" data-sec="settings">
-        <span class="ni">⚙️</span> Settings
-      </div></li>
-    </ul>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <span class="nav-icon">⊞</span> Dashboard
+      </button>
+      <button class="nav-item" data-tab="punch" onclick="switchTab('punch')">
+        <span class="nav-icon">⏱</span> Punch In / Out
+      </button>
+      <button class="nav-item" data-tab="history" onclick="switchTab('history')">
+        <span class="nav-icon">📅</span> History
+      </button>
+      <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+        <span class="nav-icon">⚙</span> Rules & Settings
+      </button>
+      <div class="nav-sep"></div>
+      <button class="nav-item" data-tab="admin" onclick="switchTab('admin')">
+        <span class="nav-icon">👥</span> Admin Panel
+      </button>
+    </nav>
 
     <div class="sidebar-footer">
-      ☪️ <span>Zakat</span> · Nisab · Timeframe
-    </div>
-  </nav>
-
-  <!-- MAIN -->
-  <div class="main">
-    <!-- TOP HEADER -->
-    <header class="top-header">
-      <div class="header-left">
-        <h2 id="page-title">Dashboard</h2>
-        <div id="page-breadcrumb" class="breadcrumb">Overview of your Zakat status</div>
+      <div class="sidebar-user">
+        <div class="user-ava" id="sidebar-ava">?</div>
+        <div style="flex:1;min-width:0">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-email">…</div>
+          <div id="sidebar-role"></div>
+        </div>
       </div>
-      <div class="header-right">
-        <div id="hijri-chip" class="hijri-chip">—</div>
-        <div id="date-chip" class="date-chip">—</div>
-        <button class="btn btn-outline btn-sm" onclick="loadAll()">↻ Refresh</button>
-        <button class="btn btn-ghost btn-sm" onclick="showChangeUrl()" title="Change API URL">⚙</button>
+      <div class="sidebar-bottom-btns">
+        <button class="sb-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        <button class="sb-btn" onclick="doLogout()" title="Sign out">⏻ Sign Out</button>
       </div>
-    </header>
-
-    <!-- CONTENT -->
-    <div class="content-area">
-
-      <!-- ── DASHBOARD ──────────────────────────── -->
-      <section id="sec-dashboard" class="section active">
-        <div id="dashboard-content">
-          <div style="text-align:center;padding:40px;color:var(--text-muted)">Loading dashboard…</div>
-        </div>
-      </section>
-
-      <!-- ── GOLD ──────────────────────────────── -->
-      <section id="sec-gold" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>🏅 Gold Assets</h3>
-            <p>Track your gold jewellery, coins, and bars</p>
-          </div>
-          <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Values</button>
-            <button class="btn btn-primary btn-sm" onclick="openAddModal('gold')">+ Add Gold Item</button>
-          </div>
-        </div>
-        <div id="tbl-gold"></div>
-      </section>
-
-      <!-- ── SILVER ─────────────────────────────── -->
-      <section id="sec-silver" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>🥈 Silver Assets</h3>
-            <p>Track your silver jewellery, coins, and bars</p>
-          </div>
-          <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Values</button>
-            <button class="btn btn-primary btn-sm" onclick="openAddModal('silver')">+ Add Silver Item</button>
-          </div>
-        </div>
-        <div id="tbl-silver"></div>
-      </section>
-
-      <!-- ── DEPOSITS ───────────────────────────── -->
-      <section id="sec-deposits" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>🏦 Deposited Money</h3>
-            <p>Bank savings, cash, and other deposits</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('deposited')">+ Add Deposit</button>
-        </div>
-        <div id="tbl-deposits"></div>
-      </section>
-
-      <!-- ── CAPITAL INVESTMENTS ────────────────── -->
-      <section id="sec-invCap" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📈 Capital Investments</h3>
-            <p>Profit reinvested into capital — <b>Zakatable</b></p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('invCap')">+ Add Investment</button>
-        </div>
-        <div id="tbl-invCap"></div>
-      </section>
-
-      <!-- ── MONTHLY INVESTMENTS ────────────────── -->
-      <section id="sec-invMon" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>💹 Monthly Income Investments</h3>
-            <p>Profit taken monthly — principal <b>not Zakatable</b> by default</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('invMon')">+ Add Investment</button>
-        </div>
-        <div id="tbl-invMon"></div>
-      </section>
-
-      <!-- ── LOAN RECEIVABLE ────────────────────── -->
-      <section id="sec-loanRec" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📤 Loan Receivable</h3>
-            <p>Money you've given to others — <b>adds to Zakat wealth</b></p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('loanRec')">+ Add Loan</button>
-        </div>
-        <div id="tbl-loanRec"></div>
-      </section>
-
-      <!-- ── LOAN PAYABLE ───────────────────────── -->
-      <section id="sec-loanPay" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📥 Loan Payable</h3>
-            <p>Money you owe others — <b>deducted from Zakat wealth</b></p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('loanPay')">+ Add Loan</button>
-        </div>
-        <div id="tbl-loanPay"></div>
-      </section>
-
-      <!-- ── MARKET VALUES ──────────────────────── -->
-      <section id="sec-market" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📊 Market Values</h3>
-            <p>Current gold &amp; silver prices per gram (BDT)</p>
-          </div>
-          <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="fetchMarket()">🌐 Fetch from Bajus.org</button>
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Assets</button>
-          </div>
-        </div>
-        <div id="market-content"></div>
-      </section>
-
-      <!-- ── TIMEFRAMES ─────────────────────────── -->
-      <section id="sec-timeframes" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📅 Zakat Timeframes</h3>
-            <p>Track yearly Zakat periods and obligations</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddTFModal()">+ New Timeframe</button>
-        </div>
-        <div id="tf-content"></div>
-      </section>
-
-      <!-- ── PAYMENTS ───────────────────────────── -->
-      <section id="sec-payments" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>💸 Zakat Payments</h3>
-            <p>Record all Zakat payments made</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddPaymentModal()">+ Record Payment</button>
-        </div>
-        <div id="pay-content"></div>
-      </section>
-
-      <!-- ── SETTINGS ───────────────────────────── -->
-      <section id="sec-settings" class="section">
-        <div class="sec-header">
-          <h3>⚙️ Calculation Settings</h3>
-        </div>
-        <div id="settings-content"></div>
-      </section>
-
-    </div><!-- /content-area -->
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<!-- ══════════════════════════════════════════
-     MODAL
-══════════════════════════════════════════ -->
-<div id="modal-overlay" class="modal-overlay hidden">
-  <div class="modal" id="modal-box">
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">Title</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body" id="modal-body"></div>
-    <div class="modal-footer" id="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" id="modal-save-btn" onclick="handleModalSave()">Save</button>
+  </aside>
+
+  <!-- Mobile Header -->
+  <header id="mob-header">
+    <div class="mob-brand">
+      <div class="mob-brand-icon">⏱</div>
+      PunchTrack
     </div>
+    <div class="mob-actions">
+      <button class="mob-btn" id="mob-theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="mob-btn" onclick="doLogout()">⏻</button>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <div id="main-content">
+
+    <div id="tab-dashboard" class="tab-content">
+      <div class="loading-placeholder"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-punch" class="tab-content" hidden>
+      <div class="loading-placeholder"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-history" class="tab-content" hidden>
+      <div class="loading-placeholder"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-settings" class="tab-content" hidden>
+      <div class="loading-placeholder"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-admin" class="tab-content" hidden>
+      <div class="loading-placeholder"><div class="spinner"></div></div>
+    </div>
+
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast-wrap"></div>
+<!-- Mobile Bottom Nav -->
+<nav id="bot-nav" hidden style="display:none;justify-content:space-around">
+  <button class="bot-item nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+    <span class="bot-item-icon">⊞</span>Home
+  </button>
+  <button class="bot-item nav-item" data-tab="punch" onclick="switchTab('punch')">
+    <span class="bot-item-icon">⏱</span>Punch
+  </button>
+  <button class="bot-item nav-item" data-tab="history" onclick="switchTab('history')">
+    <span class="bot-item-icon">📅</span>History
+  </button>
+  <button class="bot-item nav-item" data-tab="settings" onclick="switchTab('settings')">
+    <span class="bot-item-icon">⚙</span>Settings
+  </button>
+  <button class="bot-item nav-item" data-tab="admin" id="bot-admin" onclick="switchTab('admin')">
+    <span class="bot-item-icon">👥</span>Admin
+  </button>
+</nav>
 
-<!-- LOADER -->
-<div id="loader" class="hidden">
-  <div class="spinner"></div>
-  <div class="loader-msg" id="loader-msg">Loading…</div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════ -->
 <script>
-'use strict';
+// ═══════════════════════════════════════════════════════
+//  ▶  CONFIGURATION — update SCRIPT_URL before deploying
+// ═══════════════════════════════════════════════════════
+const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_DEPLOYMENT_URL';
 
-// ══════════════════════════════════════════════
-// STATE & SCHEMAS
-// ══════════════════════════════════════════════
+// ═══ HELPERS ════════════════════════════════════════════
+const pad = n => String(n).padStart(2,'0');
+const $   = id => document.getElementById(id);
+const LS  = { get:(k)=>localStorage.getItem(k), set:(k,v)=>localStorage.setItem(k,v), del:(k)=>localStorage.removeItem(k) };
 
-let GAS_URL  = '';
-let appData  = {};
-let modalCfg = null;   // { mode:'add'|'edit', schema, rowData }
-let currentSection = 'dashboard';
-
-const SCHEMAS = {
-  gold: {
-    title    : 'Gold Item',
-    sheet    : 'Gold',
-    dataKey  : 'gold',
-    totalCol : 'Selling Value (Tk)',
-    tableCols: ['Ser','Gold Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
-    colTypes : { 'Value (Tk)':'num', 'Selling Value (Tk)':'num', 'Weight (Gram)':'num' },
-    fields   : [
-      { k:'Gold Items',         l:'Item Name',          t:'text',   req:true,  ph:'e.g. Necklace, Ring, Coin' },
-      { k:'KARAT',              l:'Karat',              t:'select', req:true,  opts:['22','21','18','Traditional'], onInput:'autoCalcMetal("gold")' },
-      { k:'Weight (Gram)',      l:'Weight (Gram)',       t:'number', req:true,  step:'0.001', ph:'0.000', onInput:'autoCalcMetal("gold")' },
-      { k:'Value (Tk)',         l:'Market Value (৳)',   t:'number', step:'0.01', ph:'Auto-filled from market price', cls:'auto-fill' },
-      { k:'Selling Value (Tk)', l:'Selling/Zakat Value (৳)', t:'number', step:'0.01', ph:'Auto-filled (Market × Selling%)', cls:'auto-fill' },
-    ]
-  },
-  silver: {
-    title    : 'Silver Item',
-    sheet    : 'Silver',
-    dataKey  : 'silver',
-    totalCol : 'Selling Value (Tk)',
-    tableCols: ['Ser','Silver Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
-    colTypes : { 'Value (Tk)':'num', 'Selling Value (Tk)':'num', 'Weight (Gram)':'num' },
-    fields   : [
-      { k:'Silver Items',       l:'Item Name',          t:'text',   req:true,  ph:'e.g. Bracelet, Coin, Bar' },
-      { k:'KARAT',              l:'Karat',              t:'select', req:true,  opts:['22','21','18','Traditional'], onInput:'autoCalcMetal("silver")' },
-      { k:'Weight (Gram)',      l:'Weight (Gram)',       t:'number', req:true,  step:'0.001', ph:'0.000', onInput:'autoCalcMetal("silver")' },
-      { k:'Value (Tk)',         l:'Market Value (৳)',   t:'number', step:'0.01', ph:'Auto-filled from market price', cls:'auto-fill' },
-      { k:'Selling Value (Tk)', l:'Selling/Zakat Value (৳)', t:'number', step:'0.01', ph:'Auto-filled (Market × Selling%)', cls:'auto-fill' },
-    ]
-  },
-  deposited: {
-    title    : 'Deposit Entry',
-    sheet    : 'Deposited_Money',
-    dataKey  : 'deposited',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Deposition Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Deposition Scope', l:'Scope / Source', t:'text',   req:true, ph:'e.g. BRAC Bank Savings A/C, Cash at Home' },
-      { k:'Amount',           l:'Amount (৳)',     t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  invCap: {
-    title    : 'Capital Investment',
-    sheet    : 'Invested_Capital',
-    dataKey  : 'invCap',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Investment Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Investment Scope', l:'Investment / Company', t:'text',   req:true, ph:'e.g. Shares – BEXIMCO, FDR – Dutch Bangla' },
-      { k:'Amount',           l:'Invested Amount (৳)',  t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  invMon: {
-    title    : 'Monthly Income Investment',
-    sheet    : 'Invested_Monthly',
-    dataKey  : 'invMon',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Investment Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Investment Scope', l:'Investment / Company',  t:'text',   req:true, ph:'e.g. DPS – Islami Bank, MIS – Savings' },
-      { k:'Amount',           l:'Principal Amount (৳)',  t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  loanRec: {
-    title    : 'Loan Receivable',
-    sheet    : 'Loan_Receivable',
-    dataKey  : 'loanRec',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Loan Given Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Loan Given Scope', l:'Given To / Purpose', t:'text',   req:true, ph:'e.g. Karim Bhai – personal' },
-      { k:'Amount',           l:'Amount (৳)',          t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  loanPay: {
-    title    : 'Loan Payable',
-    sheet    : 'Loan_Payable',
-    dataKey  : 'loanPay',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Loan Taken Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Loan Taken Scope', l:'Taken From / Purpose', t:'text',   req:true, ph:'e.g. Rahim Bhai – house' },
-      { k:'Amount',           l:'Amount (৳)',            t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  }
-};
-
-// ══════════════════════════════════════════════
-// API
-// ══════════════════════════════════════════════
-
-async function apiFetch(action, queryParams = {}, postData = null) {
-  const url = new URL(GAS_URL);
-  url.searchParams.set('action', action);
-  Object.entries(queryParams).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, v);
-  });
-  const opts = { redirect: 'follow' };
-  if (postData !== null) {
-    opts.method  = 'POST';
-    opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    opts.body    = new URLSearchParams({ data: JSON.stringify(postData) });
-  }
-  const r = await fetch(url.toString(), opts);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-
+// ═══ API ════════════════════════════════════════════════
 const API = {
-  get : (a, p)     => apiFetch(a, p),
-  post: (a, d, p)  => apiFetch(a, p || {}, d),
-};
-
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
-
-window.addEventListener('DOMContentLoaded', init);
-
-async function init() {
-  GAS_URL = localStorage.getItem('zakat_gas_url') || '';
-  updateDateChips();
-  setInterval(updateDateChips, 60000);
-
-  if (!GAS_URL) { showSetup(); return; }
-
-  showApp();
-  await loadAll();
-}
-
-function showSetup() {
-  document.getElementById('setup-overlay').classList.remove('hidden');
-  document.getElementById('app').classList.add('hidden');
-}
-
-function showApp() {
-  document.getElementById('setup-overlay').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-}
-
-async function connectGAS() {
-  const url = document.getElementById('gas-url-input').value.trim();
-  const errEl = document.getElementById('setup-error');
-  errEl.textContent = '';
-
-  if (!url.includes('script.google.com')) {
-    errEl.textContent = 'https://script.google.com/macros/s/AKfycbwcwxTAc6lUtSYS8-i0x6s_DmISZpcBTrbpVqSflwcAcuhTdTfsK5zk1-DYUgiQNLBjeQ/exec';
-    return;
-  }
-
-  showLoader('Connecting & initializing sheets…');
-  try {
-    GAS_URL = url;
-    const r = await API.get('setup');
-    if (r.error) throw new Error(r.error);
-
-    localStorage.setItem('zakat_gas_url', url);
-    toast(`✓ Connected! Sheets ready: ${(r.sheetsCreated||[]).join(', ') || 'already existed'}`, 'success');
-    showApp();
-    await loadAll();
-  } catch (e) {
-    GAS_URL = '';
-    errEl.textContent = '✗ ' + e.message;
-  } finally {
-    hideLoader();
-  }
-}
-
-function showChangeUrl() {
-  openModal({
-    title : '🔗 Change API URL',
-    wide  : false,
-    body  : `<div class="form-group">
-               <label class="form-label">Google Apps Script URL</label>
-               <input id="change-url-input" class="form-control" type="url"
-                 value="${GAS_URL}" placeholder="https://script.google.com/macros/s/.../exec">
-             </div>`,
-    save  : async () => {
-      const newUrl = document.getElementById('change-url-input').value.trim();
-      if (!newUrl) return;
-      GAS_URL = newUrl;
-      localStorage.setItem('zakat_gas_url', newUrl);
-      closeModal();
-      toast('API URL updated', 'success');
-      await loadAll();
-    },
-    saveLabel: 'Update'
-  });
-}
-
-// ══════════════════════════════════════════════
-// DATA LOADING
-// ══════════════════════════════════════════════
-
-async function loadAll() {
-  showLoader('Loading Zakat data…');
-  try {
-    const r = await API.get('getAllData');
-    if (r.error) throw new Error(r.error);
-    appData = r;
-    renderAll();
-    toast('Data refreshed', 'success');
-  } catch (e) {
-    toast('Failed to load data: ' + e.message, 'error');
-  } finally {
-    hideLoader();
-  }
-}
-
-function renderAll() {
-  renderDashboard();
-  renderSection('gold');
-  renderSection('silver');
-  renderSection('deposited');
-  renderSection('invCap');
-  renderSection('invMon');
-  renderSection('loanRec');
-  renderSection('loanPay');
-  renderMarket();
-  renderTimeframes();
-  renderPayments();
-  renderSettings();
-}
-
-// ══════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════
-
-const PAGE_META = {
-  dashboard : { title:'Dashboard',              sub:'Overview of your Zakat status' },
-  gold       : { title:'Gold Assets',           sub:'Gold jewellery, coins & bars' },
-  silver     : { title:'Silver Assets',         sub:'Silver jewellery, coins & bars' },
-  deposits   : { title:'Deposited Money',       sub:'Bank savings, cash & other deposits' },
-  invCap     : { title:'Capital Investments',   sub:'Profit reinvested into capital — Zakatable' },
-  invMon     : { title:'Monthly Investments',   sub:'Monthly profit investments — principal not Zakatable by default' },
-  loanRec    : { title:'Loans Receivable',      sub:'Money owed to you — adds to Zakat wealth' },
-  loanPay    : { title:'Loans Payable',         sub:'Money you owe — deducted from Zakat wealth' },
-  market     : { title:'Market Values',         sub:'Current gold & silver prices per gram (৳)' },
-  timeframes : { title:'Zakat Timeframes',      sub:'Track yearly Zakat periods and obligations' },
-  payments   : { title:'Zakat Payments',        sub:'Record payments made' },
-  settings   : { title:'Settings',             sub:'Configure Zakat calculation rules' },
-};
-
-function navigate(sec) {
-  currentSection = sec;
-
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById('sec-' + sec) || document.getElementById('sec-' + sec.toLowerCase());
-  if (target) target.classList.add('active');
-
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.sec === sec);
-  });
-
-  const meta = PAGE_META[sec] || { title: sec, sub: '' };
-  document.getElementById('page-title').textContent = meta.title;
-  document.getElementById('page-breadcrumb').textContent = meta.sub;
-}
-
-// ══════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════
-
-function renderDashboard() {
-  const calc = appData.calc || {};
-  const s    = appData.settings || {};
-  const tfs  = appData.timeframes || [];
-  const pays = appData.payments || [];
-  const mkt  = appData.market || [];
-
-  const activeTF     = tfs.find(t => t['Status'] === 'Active');
-  const totalPaid    = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-  const lifetimeDue  = tfs.reduce((a, t) => a + (+(t['Zakat Due (Tk)']||0)), 0);
-  const remaining    = Math.max(0, (calc.due||0) - totalPaid);
-  const nisabPct     = calc.nisab?.value ? Math.min(200, (calc.total / calc.nisab.value) * 100) : 0;
-  const nisabMet     = calc.nisabMet;
-
-  const recentPays   = [...pays].reverse().slice(0, 5);
-
-  const bd = calc.breakdown || {};
-  const tfLabel = activeTF
-    ? `${fdate(activeTF['Start Date'])} → ${fdate(activeTF['End Date'])}`
-    : 'No active timeframe set';
-  const tfDays  = activeTF ? activeTF['Days'] : (s.lunar_days || 354);
-  const tfRate  = activeTF ? activeTF['Rate (%)'] : calc.rate;
-
-  document.getElementById('dashboard-content').innerHTML = `
-    <!-- NISAB ALERT -->
-    ${!mkt.some(m => +(m['Price Per Gram (Tk)']||0) > 0) ? `
-    <div class="card mb-16" style="border-left:4px solid var(--warning);background:var(--warning-light)">
-      <div class="card-body" style="padding:14px 18px">
-        ⚠️ <b>Market prices not set.</b> Please update Gold & Silver prices in
-        <a href="#" onclick="navigate('market')" style="color:var(--primary)">Market Values</a>
-        for accurate Zakat calculation.
-      </div>
-    </div>` : ''}
-
-    <!-- STAT CARDS -->
-    <div class="stat-cards mb-20">
-      <div class="stat-card sc-total">
-        <div class="sc-icon">💰</div>
-        <div class="sc-label">Total Zakatable Wealth</div>
-        <div class="sc-value">${tk(calc.total)}</div>
-        <div class="sc-sub">After deducting payable loans</div>
-      </div>
-      <div class="stat-card sc-nisab">
-        <div class="sc-icon">${nisabMet ? '✅' : '⏳'}</div>
-        <div class="sc-label">Nisab Status</div>
-        <div class="sc-value" style="font-size:17px;color:${nisabMet?'var(--success)':'var(--danger)'}">
-          ${nisabMet ? 'NISAB MET' : 'BELOW NISAB'}
-        </div>
-        <div class="sc-sub">${tk(calc.nisab?.value||0)} threshold</div>
-      </div>
-      <div class="stat-card sc-due">
-        <div class="sc-icon">📋</div>
-        <div class="sc-label">Zakat Due</div>
-        <div class="sc-value">${tk(calc.due)}</div>
-        <div class="sc-sub">${pct(calc.rate)} × Total Wealth</div>
-      </div>
-      <div class="stat-card sc-paid">
-        <div class="sc-icon">${remaining > 0 ? '⏰' : '✅'}</div>
-        <div class="sc-label">Remaining to Pay</div>
-        <div class="sc-value" style="color:${remaining>0?'var(--danger)':'var(--success)'}">
-          ${tk(remaining)}
-        </div>
-        <div class="sc-sub">${tk(totalPaid)} already paid</div>
-      </div>
-    </div>
-
-    <!-- WEALTH BREAKDOWN -->
-    <div class="breakdown-grid mb-20">
-      <div class="bd-card bd-gold">
-        <div class="bd-icon">🏅</div>
-        <div class="bd-label">Gold</div>
-        <div class="bd-val" style="color:var(--gold)">${tk(bd.gold)}</div>
-      </div>
-      <div class="bd-card bd-silver">
-        <div class="bd-icon">🥈</div>
-        <div class="bd-label">Silver</div>
-        <div class="bd-val" style="color:#607D8B">${tk(bd.silver)}</div>
-      </div>
-      <div class="bd-card bd-dep">
-        <div class="bd-icon">🏦</div>
-        <div class="bd-label">Deposits</div>
-        <div class="bd-val" style="color:#1565C0">${tk(bd.dep)}</div>
-      </div>
-      <div class="bd-card bd-icap">
-        <div class="bd-icon">📈</div>
-        <div class="bd-label">Capital Inv.</div>
-        <div class="bd-val" style="color:var(--success)">${tk(bd.icap)}</div>
-      </div>
-      <div class="bd-card bd-imon">
-        <div class="bd-icon">💹</div>
-        <div class="bd-label">Monthly Inv.</div>
-        <div class="bd-val" style="color:#E65100">${tk(bd.imon)}</div>
-      </div>
-      <div class="bd-card bd-lrec">
-        <div class="bd-icon">📤</div>
-        <div class="bd-label">Loan Rec.</div>
-        <div class="bd-val" style="color:#7B1FA2">${tk(bd.lrec)}</div>
-      </div>
-      <div class="bd-card bd-lpay">
-        <div class="bd-icon">📥</div>
-        <div class="bd-label">Loan Pay.</div>
-        <div class="bd-val" style="color:var(--danger)">-${tk(bd.lpay)}</div>
-      </div>
-    </div>
-
-    <!-- NISAB PROGRESS + TIMEFRAME -->
-    <div class="grid-2 mb-20">
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Nisab Threshold</div>
-            <div class="card-subtitle">${escHtml(calc.nisab?.label || '—')}</div>
-          </div>
-          <span class="badge ${nisabMet ? 'badge-yes' : 'badge-no'}">${nisabMet ? 'MET ✓' : 'NOT MET'}</span>
-        </div>
-        <div class="card-body">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-            <span>Your Wealth: <b>${tk(calc.total)}</b></span>
-            <span>Nisab: <b>${tk(calc.nisab?.value||0)}</b></span>
-          </div>
-          <div class="nisab-bar-wrap">
-            <div class="nisab-bar ${nisabPct>=100?'over':''}" style="width:${Math.min(100,nisabPct).toFixed(1)}%"></div>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
-            ${nisabPct.toFixed(1)}% of Nisab threshold
-            (${s.nisab_type||'silver'} ${s.nisab_karat||'22'}K)
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">📅 Active Timeframe</div>
-            <div class="card-subtitle">${activeTF ? escHtml(activeTF['Label']||'') : 'Not set'}</div>
-          </div>
-          ${activeTF ? `<span class="badge badge-active">Active</span>` : `<button class="btn btn-sm btn-primary" onclick="navigate('timeframes')">Set Timeframe</button>`}
-        </div>
-        <div class="card-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Period</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px">${tfLabel}</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Duration</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px">${tfDays} days</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Zakat Rate</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px;color:var(--primary)">${pct(tfRate)}</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Zakat Due</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px;color:var(--danger)">${tk(calc.due)}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- LIFETIME STATS + RECENT PAYMENTS -->
-    <div class="grid-2">
-
-      <div class="card">
-        <div class="card-header"><div class="card-title">📊 Lifetime Summary</div></div>
-        <div class="card-body">
-          <div class="history-grid">
-            <div class="hist-card">
-              <div class="hc-label">Total Periods</div>
-              <div class="hc-val hc-green">${tfs.length}</div>
-              <div class="hc-sub">Timeframes recorded</div>
-            </div>
-            <div class="hist-card">
-              <div class="hc-label">Total Due (Lifetime)</div>
-              <div class="hc-val hc-red">${tk(lifetimeDue)}</div>
-              <div class="hc-sub">Across all periods</div>
-            </div>
-            <div class="hist-card">
-              <div class="hc-label">Total Paid</div>
-              <div class="hc-val hc-gold">${tk(totalPaid)}</div>
-              <div class="hc-sub">${pays.length} payment(s)</div>
-            </div>
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="navigate('payments')" style="width:100%;margin-top:6px">
-            View All Payments →
-          </button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🕐 Recent Payments</div>
-          <button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()">+ Add</button>
-        </div>
-        <div class="card-body" style="padding:0">
-          ${recentPays.length ? `
-          <table class="rpay-table">
-            <thead><tr>
-              <th>Date</th><th>Timeframe</th><th style="text-align:right">Amount (৳)</th>
-            </tr></thead>
-            <tbody>
-              ${recentPays.map(p => `<tr>
-                <td>${fdate(p['Date'])}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${escHtml(String(p['Timeframe']||'—'))}</td>
-                <td style="text-align:right;font-weight:700;color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>` : `<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px">
-            No payments recorded yet<br>
-            <button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()" style="margin-top:10px">Record First Payment</button>
-          </div>`}
-        </div>
-      </div>
-
-    </div>
-  `;
-}
-
-// ══════════════════════════════════════════════
-// GENERIC WEALTH TABLE RENDER
-// ══════════════════════════════════════════════
-
-function renderSection(schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  if (!schema) return;
-
-  const sectionId = {
-    gold:'gold', silver:'silver', deposited:'deposits',
-    invCap:'invCap', invMon:'invMon', loanRec:'loanRec', loanPay:'loanPay'
-  }[schemaKey];
-
-  const container = document.getElementById('tbl-' + sectionId);
-  if (!container) return;
-
-  const data = appData[schema.dataKey] || [];
-  const cols = schema.tableCols;
-  const isNegative = (schemaKey === 'loanPay');
-
-  const total = data.reduce((a, r) => a + (+(r[schema.totalCol]||0)), 0);
-  const colTypes = schema.colTypes || {};
-
-  let tbody = '';
-  if (!data.length) {
-    tbody = `<tr class="empty-row"><td colspan="${cols.length + 1}">
-      <span class="empty-icon">📭</span>No entries yet. Click <b>Add</b> to get started.
-    </td></tr>`;
-  } else {
-    tbody = data.map(row => `
-      <tr>
-        ${cols.map(c => {
-          const val = row[c];
-          const isNum = colTypes[c] === 'num';
-          const formatted = isNum ? tk(val) : escHtml(String(val??'—'));
-          return `<td class="${isNum?'td-num':''}${c==='Ser'?' td-ser':''}">${formatted}</td>`;
-        }).join('')}
-        <td class="td-act">
-          <button class="btn-icon btn-edit" title="Edit" onclick='openEditModal("${schemaKey}", ${JSON.stringify(row).replace(/'/g,"&#39;")})'>✏️</button>
-          <button class="btn-icon btn-del"  title="Delete" onclick="deleteItem('${schema.sheet}', ${row._row}, '${schemaKey}')">🗑️</button>
-        </td>
-      </tr>`).join('');
-  }
-
-  const totalLabel = isNegative ? `Total Payable` : `Total`;
-  const totalColor = isNegative ? 'color:var(--danger)' : 'color:var(--primary)';
-
-  container.innerHTML = `
-    <div class="table-info">
-      <span>${data.length} ${data.length===1?'entry':'entries'}</span>
-      <span style="font-weight:700;${totalColor}">${totalLabel}: ${tk(total)}</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          ${cols.map(c => `<th class="${(schema.colTypes||{})[c]==='num'?'text-right':''}">${escHtml(c)}</th>`).join('')}
-          <th style="text-align:center">Actions</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-        ${data.length ? `<tfoot><tr>
-          ${cols.map((c,i) => i===0
-            ? `<td style="font-size:11px">TOTAL</td>`
-            : c === schema.totalCol
-              ? `<td class="tfoot-num" style="${totalColor}">${tk(total)}</td>`
-              : `<td></td>`
-          ).join('')}
-          <td></td>
-        </tr></tfoot>` : ''}
-      </table>
-    </div>`;
-}
-
-// ══════════════════════════════════════════════
-// MARKET VALUES
-// ══════════════════════════════════════════════
-
-function renderMarket() {
-  const mkt = appData.market || [];
-  const gold   = mkt.filter(m => m['Type'] === 'Gold');
-  const silver = mkt.filter(m => m['Type'] === 'Silver');
-
-  const card = (m, cls) => `
-    <div class="mkt-card ${cls}">
-      <div class="mkt-type">${escHtml(m['Type'])}</div>
-      <div class="mkt-karat">${escHtml(String(m['KARAT']))} Karat</div>
-      <div class="mkt-price">৳ ${num(m['Price Per Gram (Tk)'])} <span>per gram</span></div>
-      <div class="mkt-updated">Updated: ${escHtml(String(m['Last Updated']||'—'))}</div>
-      <div class="mkt-edit-row">
-        <input type="number" id="mkt_${m['Type']}_${m['KARAT']}"
-          value="${+(m['Price Per Gram (Tk)']||0)}" step="0.01" min="0"
-          placeholder="Price/gram (৳)">
-        <button class="btn btn-primary btn-sm"
-          onclick="saveMarketPrice('${m['Type']}','${m['KARAT']}')">Save</button>
-      </div>
-    </div>`;
-
-  const el = document.getElementById('market-content');
-  el.innerHTML = `
-    <div class="card mb-16" style="border-left:4px solid var(--gold);background:var(--gold-light)">
-      <div class="card-body" style="padding:12px 16px">
-        <b>ℹ️ Tip:</b> Click <b>Fetch from Bajus.org</b> to auto-update prices,
-        or enter prices manually below and click Save.
-        After updating, click <b>Recalculate Assets</b> to refresh your Gold & Silver values.
-      </div>
-    </div>
-    <h4 style="margin-bottom:10px;color:var(--gold);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">🏅 Gold Prices</h4>
-    <div class="market-grid mb-20">${gold.map(m => card(m,'mkt-gold')).join('')}</div>
-    <h4 style="margin-bottom:10px;color:#607D8B;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">🥈 Silver Prices</h4>
-    <div class="market-grid">${silver.map(m => card(m,'mkt-silver')).join('')}</div>
-  `;
-}
-
-async function saveMarketPrice(type, karat) {
-  const el    = document.getElementById(`mkt_${type}_${karat}`);
-  const price = parseFloat(el.value || 0);
-  showLoader('Saving price…');
-  try {
-    const r = await API.post('setMarket', { type, karat, price });
-    if (r.error) throw new Error(r.error);
-    toast(`✓ ${type} ${karat}K: ৳${price}/g saved`, 'success');
-    await refreshMarket();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
-}
-
-async function fetchMarket() {
-  showLoader('Fetching prices from Bajus.org…');
-  try {
-    const r = await API.get('fetchMarket');
-    if (!r.success) {
-      toast(r.error || 'Could not fetch prices', 'warning');
-    } else {
-      toast(`✓ ${r.message}`, 'success');
+  async call(params) {
+    if (!SCRIPT_URL || SCRIPT_URL.startsWith('YOUR_')) {
+      showToast('⚠ SCRIPT_URL not configured in index.html', 'error', 8000);
+      throw new Error('SCRIPT_URL not set');
     }
-    await refreshMarket();
-  } catch (e) { toast('Fetch error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
+    try {
+      const url = new URL(SCRIPT_URL);
+      Object.entries(params).forEach(([k,v]) => {
+        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
+      });
+      const resp = await fetch(url.toString(), {redirect:'follow'});
+      const text = await resp.text();
+      try { return JSON.parse(text); }
+      catch(_) { console.error('Non-JSON response:', text.slice(0,200)); throw new Error('Server returned non-JSON response'); }
+    } catch(err) {
+      if (err.message === 'SCRIPT_URL not set') throw err;
+      throw new Error('Network error: ' + err.message);
+    }
+  },
+  token() { return LS.get('pt_token'); },
+  async auth(action, extra = {}) {
+    return this.call({ action, token: this.token(), ...extra });
+  }
+};
+
+// ═══ STATE ══════════════════════════════════════════════
+const S = {
+  user: null,
+  settings: null,
+  clockInterval: null,
+  punchInTime: null,
+  currentTab: 'dashboard',
+};
+
+// ═══ TOAST ══════════════════════════════════════════════
+function showToast(msg, type = 'info', dur = 4000) {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span>${msg}</span>`;
+  $('toasts').appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 320); }, dur);
 }
 
-async function refreshMarket() {
-  const r = await API.get('getAllData');
-  if (r.market) appData.market = r.market;
-  if (r.calc)   appData.calc   = r.calc;
-  renderMarket();
-  renderDashboard();
+// ═══ LOADER ═════════════════════════════════════════════
+let _loadCt = 0;
+function setLoading(on) {
+  _loadCt = Math.max(0, _loadCt + (on ? 1 : -1));
+  $('global-loader').hidden = _loadCt === 0;
 }
 
-async function recalcMetals() {
-  showLoader('Recalculating gold & silver values…');
+// ═══ NAVIGATION ═════════════════════════════════════════
+function switchTab(tab) {
+  S.currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(t => { t.hidden = true; });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  $(`tab-${tab}`).hidden = false;
+  document.querySelectorAll(`[data-tab="${tab}"]`).forEach(n => n.classList.add('active'));
+  // Load data
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'punch')     setupPunchPage();
+  if (tab === 'history')   loadHistory();
+  if (tab === 'settings')  loadSettings();
+  if (tab === 'admin')     loadAdmin();
+}
+
+// ═══ AUTH PAGES ═════════════════════════════════════════
+function showAuthPage(page) {
+  ['pg-login','pg-register','pg-verify','pg-pending'].forEach(p => $(p).hidden = true);
+  $(page).hidden = false;
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  const pass  = $('login-pass').value;
+  if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
+  const btn = $('login-btn'); btn.disabled = true; btn.textContent = 'Signing in…';
   try {
-    const r = await API.post('recalcMetals', {});
-    if (r.error) throw new Error(r.error);
-    toast('✓ ' + r.message, 'success');
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
+    const res = await API.call({ action:'login', email, password:pass });
+    if (res.success) {
+      LS.set('pt_token', res.token);
+      S.user = { email:res.email, name:res.name, role:res.role };
+      loadApp();
+    } else {
+      showToast(res.message || 'Login failed', 'error');
+      if (res.code === 'PENDING') showAuthPage('pg-pending');
+    }
+  } catch(err) {
+    showToast('Login failed. Check your connection.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
 }
 
-// ══════════════════════════════════════════════
-// TIMEFRAMES
-// ══════════════════════════════════════════════
+async function doRegister(e) {
+  e.preventDefault();
+  const name  = $('reg-name').value.trim();
+  const email = $('reg-email').value.trim();
+  const phone = $('reg-phone').value.trim();
+  const pass  = $('reg-pass').value;
+  const pass2 = $('reg-pass2').value;
+  if (!name || !email || !pass) { showToast('Please fill all required fields', 'error'); return; }
+  if (pass !== pass2) { showToast('Passwords do not match', 'error'); return; }
+  if (pass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  const btn = $('reg-btn'); btn.disabled = true; btn.textContent = 'Registering…';
+  try {
+    const res = await API.call({ action:'register', name, email, phone, password:pass });
+    if (res.success) {
+      showToast('✅ Check your email to verify your account!', 'success', 6000);
+      showAuthPage('pg-login');
+      $('login-email').value = email;
+    } else {
+      showToast(res.message, 'error');
+    }
+  } catch(err) {
+    showToast('Registration failed. Try again.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Account';
+  }
+}
 
-function renderTimeframes() {
-  const tfs  = appData.timeframes || [];
-  const pays = appData.payments   || [];
-  const el   = document.getElementById('tf-content');
-  if (!el) return;
+// ═══ APP BOOT ═══════════════════════════════════════════
+async function init() {
+  // Apply saved theme
+  const theme = LS.get('pt_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  updateThemeBtn(theme);
 
-  const lifetimeDue  = tfs.reduce((a, t) => a + (+(t['Zakat Due (Tk)']||0)), 0);
-  const lifetimePaid = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-
-  if (!tfs.length) {
-    el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:50px">
-      <div style="font-size:48px;margin-bottom:12px">📅</div>
-      <div style="font-size:15px;font-weight:600;margin-bottom:6px">No timeframes yet</div>
-      <div style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
-        Create a Zakat timeframe to track your annual Zakat obligation
-      </div>
-      <button class="btn btn-primary" onclick="openAddTFModal()">+ Create First Timeframe</button>
-    </div></div>`;
+  // Handle email verification deep link
+  const params = new URLSearchParams(location.search);
+  if (params.get('verify') === '1') {
+    $('auth').hidden = false;
+    showAuthPage('pg-verify');
+    $('verify-status').textContent = 'Verifying your email…';
+    $('verify-icon').textContent = '⏳';
+    try {
+      const res = await API.call({ action:'verifyEmail', token:params.get('token'), email:params.get('email') });
+      $('verify-icon').textContent = res.success ? '✅' : '❌';
+      $('verify-status').textContent = res.message;
+    } catch(e) {
+      $('verify-icon').textContent = '❌';
+      $('verify-status').textContent = 'Verification failed. Please try again.';
+    }
+    $('verify-login-btn').hidden = false;
     return;
   }
 
-  const tfCards = tfs.map(tf => {
-    const isActive = tf['Status'] === 'Active';
-    const paid     = +(tf['Paid (Tk)']||0);
-    const due      = +(tf['Zakat Due (Tk)']||0);
-    const rem      = Math.max(0, due - paid);
-    const paidPct  = due > 0 ? Math.min(100, (paid/due)*100) : 0;
-    return `
-    <div class="tf-card ${isActive ? 'tf-active' : ''}">
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span class="tf-label">${escHtml(String(tf['Label']||'Unnamed'))}</span>
-          <span class="badge badge-${(tf['Status']||'draft').toLowerCase()}">${escHtml(String(tf['Status']||'Draft'))}</span>
-          ${tf['Nisab Met']==='Yes' ? `<span class="badge badge-yes">Nisab Met</span>` : `<span class="badge badge-no">Below Nisab</span>`}
-        </div>
-        <div class="tf-dates">
-          📅 ${fdate(tf['Start Date'])} → ${fdate(tf['End Date'])}
-          &nbsp;|&nbsp; ${tf['Days']} days
-        </div>
-        <div class="tf-meta">
-          <span>Rate: <b>${pct(tf['Rate (%)'])}</b></span>
-          <span>Wealth: <b>${tk(tf['Zakatable Wealth (Tk)'])}</b></span>
-          <span>Due: <b style="color:var(--danger)">${tk(due)}</b></span>
-          <span>Paid: <b style="color:var(--success)">${tk(paid)}</b></span>
-          ${rem > 0 ? `<span>Remaining: <b style="color:var(--warning)">${tk(rem)}</b></span>` : `<span style="color:var(--success)">✓ Fully Paid</span>`}
-        </div>
-        ${due > 0 ? `
-        <div style="margin-top:8px">
-          <div class="nisab-bar-wrap" style="height:5px">
-            <div class="nisab-bar ${paidPct>=100?'over':''}" style="width:${paidPct.toFixed(1)}%"></div>
-          </div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${paidPct.toFixed(0)}% paid</div>
-        </div>` : ''}
-      </div>
-      <div class="tf-actions">
-        <button class="btn-icon btn-edit" title="Edit" onclick='openEditTFModal(${JSON.stringify(tf).replace(/'/g,"&#39;")})'>✏️</button>
-        <button class="btn-icon btn-del"  title="Delete" onclick="deleteTF(${tf._row})">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="history-grid mb-20">
-      <div class="hist-card">
-        <div class="hc-label">Total Periods</div>
-        <div class="hc-val hc-green">${tfs.length}</div>
-        <div class="hc-sub">Recorded timeframes</div>
-      </div>
-      <div class="hist-card">
-        <div class="hc-label">Total Zakat Due</div>
-        <div class="hc-val hc-red">${tk(lifetimeDue)}</div>
-        <div class="hc-sub">Across all periods</div>
-      </div>
-      <div class="hist-card">
-        <div class="hc-label">Total Paid</div>
-        <div class="hc-val hc-gold">${tk(lifetimePaid)}</div>
-        <div class="hc-sub">${pays.length} payment(s)</div>
-      </div>
-    </div>
-    <div class="tf-list">${tfCards}</div>`;
-}
-
-function openAddTFModal() {
-  const today = new Date().toISOString().split('T')[0];
-  const body = `
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe Label *</label>
-        <input id="tf_label" class="form-control" placeholder="e.g. 12 Ramadan 1447 – 12 Ramadan 1448">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Start Date *</label>
-        <input id="tf_start" class="form-control" type="date" value="${today}"
-          oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Date *</label>
-        <input id="tf_end" class="form-control" type="date" oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Base Zakat Rate (%)</label>
-        <input id="tf_rate" class="form-control" type="number" value="2.5" step="0.01"
-          oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select id="tf_status" class="form-control">
-          <option value="Active">Active</option>
-          <option value="Completed">Completed</option>
-          <option value="Draft">Draft</option>
-        </select>
-      </div>
-      <div id="tf-preview" style="grid-column:1/-1;background:var(--primary-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--primary)">
-        ℹ️ Enter start and end dates to see calculation preview
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <textarea id="tf_notes" class="form-control" rows="2" placeholder="Optional notes…"></textarea>
-      </div>
-    </div>`;
-
-  openModal({
-    title: '📅 New Zakat Timeframe',
-    body,
-    wide : true,
-    save : saveTF,
-    saveLabel: 'Create Timeframe'
-  });
-}
-
-function calcTFPreview() {
-  const start = document.getElementById('tf_start')?.value;
-  const end   = document.getElementById('tf_end')?.value;
-  const rate  = parseFloat(document.getElementById('tf_rate')?.value || 2.5);
-  const prev  = document.getElementById('tf-preview');
-  if (!prev) return;
-
-  if (start && end) {
-    const days    = Math.round((new Date(end) - new Date(start)) / 86400000);
-    const effRate = ((rate * days) / 354).toFixed(4);
-    const due     = (appData.calc?.total || 0) * effRate / 100;
-    prev.innerHTML = `
-      📊 <b>${days} days</b> &nbsp;|&nbsp; Effective rate: <b>${pct(effRate)}</b>
-      (${rate}% × ${days} ÷ 354) &nbsp;|&nbsp;
-      Est. Zakat Due: <b style="color:var(--danger)">${tk(due)}</b>
-      <span style="color:var(--text-muted)">(based on current wealth of ${tk(appData.calc?.total)})</span>`;
+  const token = LS.get('pt_token');
+  if (token) {
+    setLoading(true);
+    try {
+      const res = await API.call({ action:'checkSession', token });
+      if (res.valid) {
+        S.user = { email:res.email, name:res.name, role:res.role };
+        loadApp(params.get('tab'));
+        return;
+      }
+    } catch(_) {}
+    finally { setLoading(false); }
+    LS.del('pt_token');
   }
+
+  $('auth').hidden = false;
+  showAuthPage('pg-login');
 }
 
-async function saveTF() {
-  const d = {
-    label    : document.getElementById('tf_label')?.value?.trim(),
-    startDate: document.getElementById('tf_start')?.value,
-    endDate  : document.getElementById('tf_end')?.value,
-    rate     : document.getElementById('tf_rate')?.value,
-    status   : document.getElementById('tf_status')?.value,
-    notes    : document.getElementById('tf_notes')?.value?.trim(),
+function loadApp(defaultTab) {
+  $('auth').hidden = true;
+  $('app').style.display = 'flex';
+  $('app').hidden = false;
+  $('bot-nav').style.display = 'flex';
+
+  // Populate sidebar
+  const initial = (S.user.name||'?')[0].toUpperCase();
+  $('sidebar-ava').textContent    = initial;
+  $('sidebar-name').textContent   = S.user.name;
+  $('sidebar-email').textContent  = S.user.email;
+  $('sidebar-role').textContent   = S.user.role === 'admin' ? '★ Admin' : 'Team Member';
+
+  // Hide admin tab for non-admins
+  if (S.user.role !== 'admin') {
+    document.querySelectorAll('[data-tab="admin"]').forEach(el => el.style.display = 'none');
+  }
+
+  startClock();
+  switchTab(defaultTab || 'dashboard');
+}
+
+// ═══ CLOCK ══════════════════════════════════════════════
+function startClock() {
+  if (S.clockInterval) clearInterval(S.clockInterval);
+  const tick = () => {
+    const now = new Date();
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const dateStr = now.toLocaleDateString('en-BD',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const cd = $('clock-display'), cdt = $('clock-date');
+    if (cd)  cd.textContent  = timeStr;
+    if (cdt) cdt.textContent = dateStr;
+    // Elapsed timer
+    if (S.punchInTime) {
+      const [ph, pm] = S.punchInTime.split(':').map(Number);
+      const start = new Date(); start.setHours(ph, pm, 0, 0);
+      if (start > now) start.setDate(start.getDate() - 1);
+      const secs = Math.max(0, Math.floor((now - start) / 1000));
+      const eh = Math.floor(secs / 3600), em = Math.floor((secs % 3600) / 60), es = secs % 60;
+      const el = $('elapsed-display');
+      if (el) el.textContent = `${pad(eh)}:${pad(em)}:${pad(es)}`;
+    }
   };
-  if (!d.label || !d.startDate || !d.endDate) {
-    toast('Please fill in all required fields', 'warning'); return;
-  }
-  showLoader('Saving timeframe…');
+  tick();
+  S.clockInterval = setInterval(tick, 1000);
+}
+
+// ═══ DARK MODE ══════════════════════════════════════════
+function toggleTheme() {
+  const curr = document.documentElement.getAttribute('data-theme');
+  const next = curr === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  LS.set('pt_theme', next);
+  updateThemeBtn(next);
+}
+function updateThemeBtn(theme) {
+  const icon = theme === 'dark' ? '☀' : '🌙';
+  if ($('theme-btn'))     $('theme-btn').textContent     = icon;
+  if ($('mob-theme-btn')) $('mob-theme-btn').textContent = icon;
+}
+
+// ═══ LOGOUT ═════════════════════════════════════════════
+async function doLogout() {
+  try { await API.auth('logout'); } catch(_) {}
+  LS.del('pt_token');
+  S.user = null; S.punchInTime = null;
+  if (S.clockInterval) { clearInterval(S.clockInterval); S.clockInterval = null; }
+  $('app').style.display = 'none';
+  $('bot-nav').style.display = 'none';
+  $('auth').hidden = false;
+  showAuthPage('pg-login');
+  showToast('You have been signed out.', 'info');
+}
+
+// ═══ HELPERS ════════════════════════════════════════════
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
+}
+function toHrsMin(mins) {
+  if (!mins || isNaN(mins)) return '—';
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
+}
+function fmtDateRange(start, end) {
+  const f = d => new Date(d + 'T00:00:00').toLocaleDateString('en-BD',{month:'short',day:'numeric'});
+  const e = new Date(end + 'T00:00:00').toLocaleDateString('en-BD',{month:'short',day:'numeric',year:'numeric'});
+  return `${f(start)} — ${e}`;
+}
+function fmtDate(d) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});
+}
+
+// ═══ DASHBOARD ══════════════════════════════════════════
+async function loadDashboard() {
+  $('tab-dashboard').innerHTML = `<div class="loading-placeholder"><div class="spinner"></div></div>`;
+  setLoading(true);
   try {
-    const r = await API.post('addTF', d);
-    if (r.error) throw new Error(r.error);
-    toast(`✓ Timeframe "${d.label}" created. Zakat Due: ${tk(r.zakatDue)}`, 'success');
-    closeModal();
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
+    const res = await API.auth('getDashboard');
+    if (!res.success) { showToast(res.message || 'Failed to load dashboard', 'error'); return; }
+    S.settings = res.data;
+    renderDashboard(res.data);
+  } catch(err) {
+    $('tab-dashboard').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><p>Could not load dashboard. Check your connection.</p><button class="btn btn-primary" style="margin-top:12px" onclick="loadDashboard()">Retry</button></div>`;
+  } finally { setLoading(false); }
 }
 
-function openEditTFModal(tf) {
-  const start = tf['Start Date'] ? new Date(tf['Start Date']).toISOString().split('T')[0] : '';
-  const end   = tf['End Date']   ? new Date(tf['End Date']).toISOString().split('T')[0]   : '';
+function renderDashboard(d) {
+  const C = 326.7; // circumference for r=52
+  const offset = C * (1 - Math.min(100, d.pct || 0) / 100);
+  const ringColor = d.pct >= 100 ? 'var(--ok)' : d.pct >= 60 ? 'var(--pri)' : 'var(--warn)';
+  const lm = d.lastMonth || {};
+  const hasDeduction = lm.willDeduct;
 
-  const body = `
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe Label *</label>
-        <input id="etf_label" class="form-control" value="${escHtml(String(tf['Label']||''))}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Start Date *</label>
-        <input id="etf_start" class="form-control" type="date" value="${start}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Date *</label>
-        <input id="etf_end" class="form-control" type="date" value="${end}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select id="etf_status" class="form-control">
-          <option value="Active"    ${tf['Status']==='Active'    ?'selected':''}>Active</option>
-          <option value="Completed" ${tf['Status']==='Completed' ?'selected':''}>Completed</option>
-          <option value="Draft"     ${tf['Status']==='Draft'     ?'selected':''}>Draft</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Paid (৳)</label>
-        <input id="etf_paid" class="form-control" type="number" value="${+(tf['Paid (Tk)']||0)}" step="0.01">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <textarea id="etf_notes" class="form-control" rows="2">${escHtml(String(tf['Notes']||''))}</textarea>
-      </div>
-    </div>`;
-
-  openModal({
-    title: '✏️ Edit Timeframe',
-    body, wide: true,
-    save: async () => {
-      const s  = document.getElementById('etf_start').value;
-      const e  = document.getElementById('etf_end').value;
-      const days = s && e ? Math.round((new Date(e) - new Date(s)) / 86400000) : +(tf['Days']||354);
-      const d  = {
-        'Label'                : document.getElementById('etf_label').value.trim(),
-        'Start Date'           : s,
-        'End Date'             : e,
-        'Days'                 : days,
-        'Rate (%)'             : +(document.getElementById('etf_start').value ? ((2.5*days)/354).toFixed(4) : tf['Rate (%)']),
-        'Status'               : document.getElementById('etf_status').value,
-        'Paid (Tk)'            : +(document.getElementById('etf_paid').value||0),
-        'Notes'                : document.getElementById('etf_notes').value.trim(),
-        'Zakatable Wealth (Tk)': tf['Zakatable Wealth (Tk)'],
-        'Nisab Met'            : tf['Nisab Met'],
-        'Zakat Due (Tk)'       : tf['Zakat Due (Tk)'],
-      };
-      showLoader('Updating…');
-      try {
-        const r = await API.post('update', d, { sheet: 'Zakat_Timeframes', row: tf._row });
-        if (r.error) throw new Error(r.error);
-        // If set to Active, update settings days
-        if (d.Status === 'Active') {
-          await API.post('saveSettings', { active_tf_days: String(days), active_tf_label: d.Label, active_tf_row: String(tf._row) });
-        }
-        toast('✓ Timeframe updated', 'success');
-        closeModal();
-        await loadAll();
-      } catch (err) { toast('Error: ' + err.message, 'error'); }
-      finally { hideLoader(); }
-    },
-    saveLabel: 'Update'
-  });
-}
-
-async function deleteTF(row) {
-  confirmDialog('Delete this timeframe? This cannot be undone.', async () => {
-    showLoader('Deleting…');
-    try {
-      const r = await API.post('deleteTF', {}, { row });
-      if (r.error) throw new Error(r.error);
-      toast('Timeframe deleted', 'success');
-      await loadAll();
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
-  });
-}
-
-// ══════════════════════════════════════════════
-// PAYMENTS
-// ══════════════════════════════════════════════
-
-function renderPayments() {
-  const pays = appData.payments   || [];
-  const tfs  = appData.timeframes || [];
-  const el   = document.getElementById('pay-content');
-  if (!el) return;
-
-  const total = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-
-  let tbody = '';
-  if (!pays.length) {
-    tbody = `<tr class="empty-row"><td colspan="6">
-      <span class="empty-icon">💸</span>No payments recorded yet.
-    </td></tr>`;
-  } else {
-    tbody = [...pays].reverse().map(p => `<tr>
-      <td class="td-ser">${p['Ser']}</td>
-      <td>${fdate(p['Date'])}</td>
-      <td style="font-size:12px">${escHtml(String(p['Timeframe']||'—'))}</td>
-      <td class="td-num" style="font-weight:700;color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${escHtml(String(p['Notes']||'—'))}</td>
-      <td class="td-act">
-        <button class="btn-icon btn-del" onclick="deletePayment(${p._row})">🗑️</button>
-      </td>
-    </tr>`).join('');
-  }
-
-  el.innerHTML = `
-    <div class="table-info mb-0">
-      <span>${pays.length} payment(s)</span>
-      <span style="font-weight:700;color:var(--primary)">Total Paid: ${tk(total)}</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>#</th><th>Date</th><th>Timeframe</th>
-          <th class="text-right">Amount (৳)</th><th>Notes</th><th style="text-align:center">Del</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-        ${pays.length ? `<tfoot><tr>
-          <td colspan="3" style="font-size:11px">TOTAL PAID</td>
-          <td class="tfoot-num">${tk(total)}</td>
-          <td colspan="2"></td>
-        </tr></tfoot>` : ''}
-      </table>
-    </div>`;
-}
-
-function openAddPaymentModal() {
-  const tfs   = appData.timeframes || [];
-  const today = new Date().toISOString().split('T')[0];
-  const activeTF = tfs.find(t => t['Status'] === 'Active');
-  const tfOpts = tfs.map(tf =>
-    `<option value="${escHtml(String(tf['Label']||''))}" data-row="${tf._row}"
-      ${activeTF && tf._row === activeTF._row ? 'selected' : ''}>
-      ${escHtml(String(tf['Label']||'Unnamed'))} (${fdate(tf['Start Date'])}–${fdate(tf['End Date'])})
-    </option>`
-  ).join('');
-
-  const body = `
-    <div class="form-grid">
-      <div class="form-group">
-        <label class="form-label">Payment Date *</label>
-        <input id="pay_date" class="form-control" type="date" value="${today}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Amount (৳) *</label>
-        <input id="pay_amount" class="form-control" type="number" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe</label>
-        <select id="pay_tf" class="form-control">
-          <option value="">— Select Timeframe —</option>
-          ${tfOpts}
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <input id="pay_notes" class="form-control" placeholder="e.g. Paid via bKash to Masjid">
-      </div>
-    </div>`;
-
-  openModal({
-    title: '💸 Record Zakat Payment',
-    body, wide: false,
-    save: async () => {
-      const tfSel  = document.getElementById('pay_tf');
-      const tfRow  = tfSel.options[tfSel.selectedIndex]?.dataset.row;
-      const amount = parseFloat(document.getElementById('pay_amount').value || 0);
-      if (!amount) { toast('Enter a valid amount', 'warning'); return; }
-
-      const d = {
-        date     : document.getElementById('pay_date').value,
-        amount,
-        timeframe: tfSel.value,
-        notes    : document.getElementById('pay_notes').value.trim(),
-        tfRow    : tfRow || '',
-      };
-      showLoader('Saving payment…');
-      try {
-        const r = await API.post('addPayment', d);
-        if (r.error) throw new Error(r.error);
-        toast(`✓ Payment of ${tk(amount)} recorded`, 'success');
-        closeModal();
-        await loadAll();
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
-    },
-    saveLabel: 'Record Payment'
-  });
-}
-
-async function deletePayment(row) {
-  confirmDialog('Delete this payment record?', async () => {
-    showLoader('Deleting…');
-    try {
-      const r = await API.post('deletePayment', {}, { row });
-      if (r.error) throw new Error(r.error);
-      toast('Payment deleted', 'success');
-      await loadAll();
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
-  });
-}
-
-// ══════════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════════
-
-function renderSettings() {
-  const s = appData.settings || {};
-  const el = document.getElementById('settings-content');
-  if (!el) return;
-
-  const toggle = (key, label, hint='') => `
-    <div class="toggle-group" style="padding:8px 0;border-bottom:1px solid var(--border-light)">
-      <label class="toggle">
-        <input type="checkbox" id="s_${key}" ${s[key]==='true'?'checked':''}
-          onchange="settingChanged()">
-        <span class="toggle-slider"></span>
-      </label>
+  $('tab-dashboard').innerHTML = `
+    <div class="page-header">
       <div>
-        <div class="toggle-label">${label}</div>
-        ${hint ? `<div style="font-size:11px;color:var(--text-muted)">${hint}</div>` : ''}
+        <h1 class="page-title">Good ${greeting()}, ${(d.name||'').split(' ')[0]}!</h1>
+        <p class="page-sub">${fmtDateRange(d.weekStart, d.weekEnd)}</p>
       </div>
-    </div>`;
-
-  el.innerHTML = `
-    <div class="settings-grid">
-
-      <!-- NISAB -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">📐 Nisab Calculation</div></div>
-        <div class="card-body">
-          <div class="settings-section">
-            <div class="ss-title">Nisab Based On</div>
-            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group">
-                <label class="form-label">Metal</label>
-                <select id="s_nisab_type" class="form-control" onchange="settingChanged()">
-                  <option value="silver" ${s.nisab_type==='silver'?'selected':''}>Silver (52.5 Tola)</option>
-                  <option value="gold"   ${s.nisab_type==='gold'  ?'selected':''}>Gold (7.5 Tola)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Karat</label>
-                <select id="s_nisab_karat" class="form-control" onchange="settingChanged()">
-                  <option value="22"          ${s.nisab_karat==='22'         ?'selected':''}>22 Karat</option>
-                  <option value="21"          ${s.nisab_karat==='21'         ?'selected':''}>21 Karat</option>
-                  <option value="18"          ${s.nisab_karat==='18'         ?'selected':''}>18 Karat</option>
-                  <option value="Traditional" ${s.nisab_karat==='Traditional'?'selected':''}>Traditional</option>
-                </select>
-              </div>
-            </div>
-            <div id="nisab-preview" style="margin-top:10px;padding:10px;background:var(--gold-light);border-radius:var(--radius-sm);font-size:12px"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RATE -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">💯 Rate & Selling Price</div></div>
-        <div class="card-body">
-          <div class="form-grid" style="gap:12px">
-            <div class="form-group">
-              <label class="form-label">Base Zakat Rate (%)</label>
-              <input id="s_zakat_rate" class="form-control" type="number"
-                value="${s.zakat_rate||2.5}" step="0.01" min="0" max="100"
-                oninput="settingChanged()">
-              <div class="form-hint">Standard Islamic rate is 2.5%</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Gold/Silver Selling Price (%)</label>
-              <input id="s_selling_pct" class="form-control" type="number"
-                value="${s.selling_pct||80}" step="1" min="1" max="100"
-                oninput="settingChanged()">
-              <div class="form-hint">Selling value as % of market price (e.g. 80%)</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Lunar Year (days)</label>
-              <input id="s_lunar_days" class="form-control" type="number"
-                value="${s.lunar_days||354}" step="1" min="354" max="384"
-                oninput="settingChanged()">
-              <div class="form-hint">Standard: 354 days (lunar year)</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WEALTH INCLUSION -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">✅ Include in Zakat Wealth</div></div>
-        <div class="card-body">
-          ${toggle('incl_gold',   '🏅 Gold',                'Include gold selling value')}
-          ${toggle('incl_silver', '🥈 Silver',              'Include silver selling value')}
-          ${toggle('incl_dep',    '🏦 Deposits',            'Include bank savings & cash')}
-          ${toggle('incl_icap',   '📈 Capital Investments', 'Profit reinvested into capital')}
-          ${toggle('incl_imon',   '💹 Monthly Investments', 'Monthly-profit investments (principal)')}
-          ${toggle('incl_lrec',   '📤 Loan Receivable',     'Money owed to you by others')}
-        </div>
-      </div>
-
-      <!-- LOAN TREATMENT -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">💳 Loan Treatment</div></div>
-        <div class="card-body">
-          ${toggle('ded_lpay', '📥 Deduct Loan Payable',
-            'Subtract money you owe from total Zakatable wealth')}
-          <div style="margin-top:16px;padding:12px;background:var(--gold-light);border-radius:var(--radius-sm);font-size:12px">
-            <b>ℹ️ Islamic Finance Rule:</b> Loan receivable increases your Zakatable wealth.
-            Loan payable reduces it. This is enabled by default.
-          </div>
-        </div>
-      </div>
-
+      ${d.todayPunch && d.todayPunch.punchIn && !d.todayPunch.punchOut ? `
+        <div class="punch-live-badge"><span class="pulse-dot"></span>Clocked in since ${d.todayPunch.punchIn}</div>` : ''}
     </div>
 
-    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-      <div id="settings-preview" style="flex:1;padding:12px 14px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:12px;color:var(--primary)"></div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
-    </div>`;
+    <div class="stats-top">
+      <div class="ring-card">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" stroke="var(--bdr2)" stroke-width="10" fill="none"/>
+          <circle cx="60" cy="60" r="52" stroke="${ringColor}" stroke-width="10" fill="none"
+            stroke-linecap="round"
+            stroke-dasharray="${C}"
+            stroke-dashoffset="${offset}"
+            transform="rotate(-90 60 60)"
+            style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+          <text x="60" y="57" text-anchor="middle" class="ring-pct" fill="var(--txt)" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="600">${d.pct}%</text>
+          <text x="60" y="74" text-anchor="middle" fill="var(--txt2)" font-size="10" font-weight="500">of target</text>
+        </svg>
+        <div class="ring-info">
+          <div class="ring-hours">${d.doneHrs}h <span>/ ${d.targetHrs}h</span></div>
+          <div class="ring-caption">This Week</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--txt2)">${d.workedDays} of ${d.wDaysInWeek} days</div>
+        </div>
+      </div>
 
-  updateSettingsPreview();
+      <div class="mini-stats">
+        <div class="stat-card">
+          <div class="stat-icon si-cyan">⏳</div>
+          <div>
+            <div class="stat-val">${d.leftHrs}h</div>
+            <div class="stat-lbl">Remaining</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-amber">📅</div>
+          <div>
+            <div class="stat-val">${d.daysLeft}</div>
+            <div class="stat-lbl">Days Left</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-indigo">📈</div>
+          <div>
+            <div class="stat-val">${d.avgReqHrs}h/d</div>
+            <div class="stat-lbl">Avg Needed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon si-green">✅</div>
+          <div>
+            <div class="stat-val">${d.avgDoneHrs}h/d</div>
+            <div class="stat-lbl">Avg Done</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">📆 This Week's Attendance</h2>
+      <div class="week-grid">
+        ${(d.weekGrid || []).map(day => `
+          <div class="day-cell ${day.isToday?'today':''} ${day.isFuture?'future':''} ${!day.punchIn&&!day.isFuture?'absent':''}">
+            <div class="day-name">${day.day}</div>
+            <div class="day-date">${day.date.slice(5)}</div>
+            ${day.punchIn ? `
+              <div class="day-in">▶ ${day.punchIn}</div>
+              <div class="day-out${!day.punchOut?' pending':''}">${day.punchOut ? '⏹ '+day.punchOut : '● live'}</div>
+              <div class="day-hrs ${day.mins > 0 ? (day.mins >= 480 ? 'hrs-ok':'hrs-low') : ''}">${day.mins ? toHrsMin(day.mins) : '—'}</div>
+            ` : day.isFuture ? `<div class="day-future">—</div>` : `<div class="day-absent">No entry</div>`}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card ${hasDeduction ? 'card-warn':'card-ok'}">
+      <div class="lm-header">
+        <div style="display:flex;align-items:center">
+          <span class="lm-icon ${hasDeduction?'err':'ok'}">${hasDeduction ? '⚠' : '✓'}</span>
+          <span class="lm-title">Last Month: ${lm.month || '—'}</span>
+        </div>
+        ${hasDeduction
+          ? `<span class="deduction-badge">BDT ${(lm.totalDed||0).toLocaleString()} deduction</span>`
+          : `<span class="ok-badge">No Deduction</span>`}
+      </div>
+      <div class="lm-stats">
+        <div><span>Work Days</span><strong>${lm.workDays ?? '—'}</strong></div>
+        <div><span>Hours Done</span><strong>${lm.doneHrs ?? '—'}h</strong></div>
+        <div><span>Required</span><strong>${lm.reqHrs ?? '—'}h</strong></div>
+        <div><span>Shortfall</span><strong ${lm.shortfallHrs > 0 ? 'class="text-err"':''}>${lm.shortfallHrs ?? '—'}h</strong></div>
+        ${lm.hourDed > 0 ? `<div><span>Hour deduction</span><strong class="text-err">BDT ${lm.hourDed.toLocaleString()}</strong></div>` : ''}
+        ${lm.dedHols > 0 ? `<div><span>Leave deduction (${lm.dedHols}d)</span><strong class="text-err">BDT ${lm.dedHolDed.toLocaleString()}</strong></div>` : ''}
+      </div>
+    </div>
+  `;
 }
 
-function settingChanged() { updateSettingsPreview(); }
+// ═══ PUNCH PAGE ═════════════════════════════════════════
+async function setupPunchPage() {
+  setLoading(true);
+  try {
+    const res = await API.auth('getTodayPunch');
+    if (res.success) renderPunchPage(res.punch);
+    else showToast(res.message, 'error');
+  } catch(err) {
+    showToast('Failed to load punch data', 'error');
+  } finally { setLoading(false); }
+}
 
-function updateSettingsPreview() {
-  const prev = document.getElementById('settings-preview');
-  if (!prev) return;
-  const nisabType  = document.getElementById('s_nisab_type')?.value  || 'silver';
-  const nisabKarat = document.getElementById('s_nisab_karat')?.value || '22';
-  const rate       = document.getElementById('s_zakat_rate')?.value  || '2.5';
-  const sellPct    = document.getElementById('s_selling_pct')?.value || '80';
-  const days       = document.getElementById('s_lunar_days')?.value  || '354';
-  const mkt        = appData.market || [];
-  const key        = `${nisabType === 'silver' ? 'Silver' : 'Gold'}_${nisabKarat}`;
-  const ppu        = mkt.find(m => `${m['Type']}_${m['KARAT']}` === key);
-  const price      = ppu ? +(ppu['Price Per Gram (Tk)']||0) : 0;
-  const weight     = nisabType === 'silver' ? 612.36 : 87.48;
-  const nisabVal   = weight * price;
+function renderPunchPage(punch) {
+  const isPunchedIn = punch && punch.punchIn && !punch.punchOut;
+  const isDone      = punch && punch.punchIn && punch.punchOut;
+  S.punchInTime = isPunchedIn ? punch.punchIn : null;
 
-  const nisabPrevEl = document.getElementById('nisab-preview');
-  if (nisabPrevEl) {
-    nisabPrevEl.innerHTML = price > 0
-      ? `Nisab = ${weight}g × ৳${price}/g = <b>${tk(nisabVal)}</b>`
-      : `⚠️ Market price for ${nisabKarat}K ${nisabType} not set. Update in Market Values.`;
+  const today = new Date().toISOString().slice(0,10);
+
+  $('tab-punch').innerHTML = `
+    <div class="punch-page">
+      <div class="clock-card">
+        <div class="clock-time" id="clock-display">--:--:--</div>
+        <div class="clock-date" id="clock-date">Loading…</div>
+      </div>
+
+      <div class="punch-center">
+        ${isPunchedIn ? `
+          <div class="elapsed-label">Elapsed Time</div>
+          <div class="elapsed-time" id="elapsed-display">00:00:00</div>
+          <button class="punch-btn punch-out-btn" onclick="doPunchOut()">
+            <span class="punch-icon">⏹</span>PUNCH OUT
+          </button>
+          <div class="punch-since">Clocked in at <strong>${punch.punchIn}</strong></div>
+        ` : isDone ? `
+          <div class="done-badge">✓ Day Complete</div>
+          <div class="done-summary">
+            <div>${punch.punchIn} → ${punch.punchOut}</div>
+            <div class="done-hours">${toHrsMin(punch.minutes)} logged today</div>
+          </div>
+          <button class="punch-btn punch-correction-btn" onclick="document.getElementById('manual-entry-card').scrollIntoView({behavior:'smooth'})">
+            ✏ Edit Entry
+          </button>
+        ` : `
+          <button class="punch-btn punch-in-btn" onclick="doPunchIn()">
+            <span class="punch-icon">▶</span>PUNCH IN
+          </button>
+          <div class="punch-hint">Tap to start your work day</div>
+        `}
+      </div>
+
+      <div class="card punch-record-card">
+        <h3 class="card-title">Today's Record</h3>
+        ${punch ? `
+          <div class="punch-record-row">
+            <div class="pr-item"><span>In</span><strong>${punch.punchIn || '—'}</strong></div>
+            <div class="pr-sep">→</div>
+            <div class="pr-item"><span>Out</span><strong>${punch.punchOut || '—'}</strong></div>
+            <div class="pr-sep">|</div>
+            <div class="pr-item"><span>Total</span><strong>${punch.minutes ? toHrsMin(punch.minutes) : '—'}</strong></div>
+          </div>
+        ` : `<p class="text-muted" style="font-size:13px">No entry for today yet.</p>`}
+      </div>
+
+      <div class="card" id="manual-entry-card">
+        <h3 class="card-title">✏ Manual Entry & Corrections</h3>
+        <p class="text-muted" style="font-size:13px;margin-bottom:16px">Add or correct attendance records for any past date.</p>
+        <div class="manual-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="man-date" class="input" value="${today}" max="${today}">
+            </div>
+            <div class="form-group">
+              <label>Punch In</label>
+              <input type="time" id="man-in" class="input">
+            </div>
+            <div class="form-group">
+              <label>Punch Out</label>
+              <input type="time" id="man-out" class="input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes (optional)</label>
+            <input type="text" id="man-notes" class="input" placeholder="e.g. Work from home, client visit…">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveManualEntry()">💾 Save Entry</button>
+            <button class="btn btn-ghost" onclick="loadManualDate()">Load Date</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  startClock(); // re-attach to new DOM elements
+}
+
+async function doPunchIn() {
+  const now = new Date();
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const btn = document.querySelector('.punch-in-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="punch-icon">⏳</span>Recording…'; }
+  try {
+    const res = await API.auth('punchIn', { time });
+    if (res.success) { showToast(`✅ Punched in at ${time}`, 'success'); setupPunchPage(); }
+    else {
+      showToast(res.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span class="punch-icon">▶</span>PUNCH IN'; }
+    }
+  } catch(err) {
+    showToast('Punch in failed. Try again.', 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="punch-icon">▶</span>PUNCH IN'; }
   }
+}
 
-  prev.innerHTML = `
-    Nisab: <b>${nisabType === 'silver' ? '52.5 Tola Silver' : '7.5 Tola Gold'} (${nisabKarat}K)</b>
-    = ${tk(nisabVal)} &nbsp;|&nbsp;
-    Zakat Rate: <b>${rate}%</b> for ${days} days &nbsp;|&nbsp;
-    Gold/Silver Selling Price: <b>${sellPct}%</b> of market
+async function doPunchOut() {
+  const now = new Date();
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const btn = document.querySelector('.punch-out-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="punch-icon">⏳</span>Recording…'; }
+  try {
+    const res = await API.auth('punchOut', { time });
+    if (res.success) {
+      showToast(`✅ Punched out at ${time} — ${res.hours}h logged`, 'success', 5000);
+      S.punchInTime = null;
+      setupPunchPage();
+    } else {
+      showToast(res.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span class="punch-icon">⏹</span>PUNCH OUT'; }
+    }
+  } catch(err) {
+    showToast('Punch out failed. Try again.', 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="punch-icon">⏹</span>PUNCH OUT'; }
+  }
+}
+
+async function saveManualEntry() {
+  const date    = $('man-date').value;
+  const punchIn = $('man-in').value;
+  const punchOut= $('man-out').value;
+  const notes   = $('man-notes').value;
+  if (!date)    { showToast('Date is required', 'error'); return; }
+  if (!punchIn) { showToast('Punch-in time is required', 'error'); return; }
+  if (punchOut && punchOut <= punchIn) { showToast('Punch-out must be after punch-in', 'error'); return; }
+  try {
+    const res = await API.auth('updatePunch', { date, punchIn, punchOut, notes });
+    if (res.success) { showToast('✅ ' + res.message, 'success'); setupPunchPage(); }
+    else showToast(res.message, 'error');
+  } catch(err) { showToast('Save failed. Try again.', 'error'); }
+}
+
+async function loadManualDate() {
+  const date = $('man-date').value;
+  if (!date) { showToast('Select a date first', 'error'); return; }
+  try {
+    const res = await API.auth('getWeekPunches', { start:date, end:date });
+    if (res.success && res.punches && res.punches.length > 0) {
+      const p = res.punches[0];
+      $('man-in').value    = p.punchIn  || '';
+      $('man-out').value   = p.punchOut || '';
+      $('man-notes').value = p.notes    || '';
+      showToast('Existing record loaded', 'info');
+    } else {
+      $('man-in').value = $('man-out').value = $('man-notes').value = '';
+      showToast('No record found — form cleared for new entry', 'info');
+    }
+  } catch(err) { showToast('Load failed', 'error'); }
+}
+
+// ═══ HISTORY ════════════════════════════════════════════
+async function loadHistory() {
+  $('tab-history').innerHTML = `<div class="loading-placeholder"><div class="spinner"></div></div>`;
+  setLoading(true);
+  try {
+    const res = await API.auth('getHistory', { weeks:8 });
+    if (res.success) renderHistory(res.history);
+    else showToast(res.message, 'error');
+  } catch(err) {
+    $('tab-history').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><p>Could not load history.</p></div>`;
+  } finally { setLoading(false); }
+}
+
+function renderHistory(history) {
+  if (!history || !history.length) {
+    $('tab-history').innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>No history yet. Start punching in to build your record!</p></div>`;
+    return;
+  }
+  $('tab-history').innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Work History</h1>
+        <p class="page-sub">Your last 8 weeks of attendance</p>
+      </div>
+    </div>
+    <div class="history-list">
+      ${history.map((wk,i) => `
+        <div class="week-card ${wk.met ? 'week-met':'week-missed'}">
+          <div class="week-header" onclick="toggleWeekDetail(${i})">
+            <div class="week-left">
+              <span class="badge ${wk.met?'badge-ok':'badge-warn'}">${wk.met ? '✓ Target Met':'⚠ Below Target'}</span>
+              <span class="week-dates">${fmtDateRange(wk.start, wk.end)}</span>
+            </div>
+            <div class="week-right">
+              <div class="week-hrs">${wk.hrs}h <span class="wk-target">/ ${wk.targetHrs}h</span></div>
+              <div class="week-bar-outer">
+                <div class="week-bar-fill ${wk.met?'bar-ok':'bar-err'}" style="width:${wk.pct}%"></div>
+              </div>
+              <span id="chev-${i}" style="color:var(--txt3);font-size:12px">▼</span>
+            </div>
+          </div>
+          <div class="week-details" id="wk-detail-${i}" hidden>
+            <div class="day-table">
+              <div class="dt-head">
+                <span>Day</span><span>Date</span><span>In</span><span>Out</span><span>Hours</span>
+              </div>
+              ${(wk.days||[]).map(day => `
+                <div class="dt-row ${!day.punchIn ? 'dt-absent':''}">
+                  <span class="dt-day">${day.day}</span>
+                  <span>${day.date.slice(5)}</span>
+                  <span>${day.punchIn || '—'}</span>
+                  <span>${day.punchOut || '—'}</span>
+                  <span class="dt-hrs">${day.mins ? toHrsMin(day.mins):'—'}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="week-summary-row">
+              <span>${wk.worked}/${wk.wDays} working days attended</span>
+              <span>${wk.hrs}h of ${wk.targetHrs}h target (${wk.pct}%)</span>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function toggleWeekDetail(i) {
+  const d = $(`wk-detail-${i}`), c = $(`chev-${i}`);
+  d.hidden = !d.hidden;
+  c.textContent = d.hidden ? '▼' : '▲';
+}
+
+// ═══ SETTINGS ═══════════════════════════════════════════
+const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+async function loadSettings() {
+  $('tab-settings').innerHTML = `<div class="loading-placeholder"><div class="spinner"></div></div>`;
+  setLoading(true);
+  try {
+    const [sRes, gRes, pRes] = await Promise.all([
+      API.auth('getSettings'),
+      API.auth('getGovHols'),
+      API.auth('getPersonalHols'),
+    ]);
+    if (sRes.success) {
+      S.settings = sRes.settings;
+      renderSettings(sRes.settings, gRes.holidays || [], pRes.holidays || []);
+    } else showToast(sRes.message, 'error');
+  } catch(err) { showToast('Failed to load settings', 'error'); }
+  finally { setLoading(false); }
+}
+
+function renderSettings(cfg, govHols, persHols) {
+  const checked = (cfg.holidayDays||'').split(',').map(d => d.trim());
+  const today = new Date().toISOString().slice(0,10);
+
+  $('tab-settings').innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">Rules & Settings</h1>
+    </div>
+
+    <div class="card settings-section">
+      <h3 class="section-title">⏱ Work Schedule</h3>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>Target Hours / Week</label>
+          <input type="number" id="s-target" class="input" value="${cfg.targetHrs||48}" min="1" max="80" step="0.5">
+        </div>
+        <div class="form-group">
+          <label>Min Hours / Day</label>
+          <input type="number" id="s-min-day" class="input" value="${cfg.minDayHrs||8}" min="1" max="24" step="0.5">
+        </div>
+        <div class="form-group">
+          <label>Min Hours / Week</label>
+          <input type="number" id="s-min-wk" class="input" value="${cfg.minWkHrs||40}" min="1" max="80" step="0.5">
+        </div>
+        <div class="form-group">
+          <label>Week Starts On</label>
+          <select id="s-week-start" class="input">
+            ${WEEK_DAYS.map(d=>`<option value="${d}" ${cfg.weekStart===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card settings-section">
+      <h3 class="section-title">💰 Salary & Deductions</h3>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>Monthly Gross Salary (BDT)</label>
+          <input type="number" id="s-salary" class="input" value="${cfg.salary||0}" min="0" step="500">
+        </div>
+        <div class="form-group">
+          <label>Working Days / Month</label>
+          <input type="number" id="s-month-days" class="input" value="${cfg.monthDays||22}" min="18" max="31">
+        </div>
+      </div>
+      <p class="hint-text">💡 Deductions are calculated at month-end: if total hours are below the minimum required, the shortfall fraction of your salary is deducted.</p>
+    </div>
+
+    <div class="card settings-section">
+      <h3 class="section-title">🗓 Weekly Off Days</h3>
+      <div class="day-checkboxes">
+        ${WEEK_DAYS.map(d=>`
+          <label class="day-check ${checked.includes(d)?'checked':''}">
+            <input type="checkbox" class="hol-day-cb" value="${d}" ${checked.includes(d)?'checked':''}
+              onchange="this.closest('label').classList.toggle('checked',this.checked)">
+            ${d.slice(0,3)}
+          </label>
+        `).join('')}
+      </div>
+      <p class="hint-text" style="margin-top:10px">Selected days are excluded from work-hour calculations.</p>
+    </div>
+
+    <div class="card settings-section">
+      <h3 class="section-title">🏖 Personal Holidays / Leaves</h3>
+      <div class="add-holiday-form">
+        <input type="date" id="ph-date" class="input" max="${today}" style="max-width:180px">
+        <select id="ph-type" class="input" style="max-width:240px">
+          <option value="false">Non-deductible (approved / paid leave)</option>
+          <option value="true">Deductible (unpaid / unapproved)</option>
+        </select>
+        <input type="text" id="ph-reason" class="input" placeholder="Reason (optional)">
+        <button class="btn btn-primary" onclick="addPersonalHol()">Add</button>
+      </div>
+      <div id="pers-hols-list">
+        ${persHols.length === 0 ? `<p class="text-muted">No personal holidays recorded.</p>` :
+          persHols.sort((a,b)=>b.date.localeCompare(a.date)).map(h=>`
+            <div class="hol-item ${h.deductible?'hol-deductible':''}">
+              <div>
+                <strong>${fmtDate(h.date)}</strong>
+                <span class="hol-type">${h.deductible?'Deductible':'Approved'}</span>
+                ${h.reason?`<span class="hol-reason">${h.reason}</span>`:''}
+              </div>
+              <button class="btn-icon danger" onclick="removePersonalHol('${h.date}')">✕</button>
+            </div>
+          `).join('')}
+      </div>
+    </div>
+
+    <div class="card settings-section">
+      <h3 class="section-title">🏛 Government Holidays
+        ${S.user.role==='admin'?`<span class="admin-tag">Admin</span>`:''}
+      </h3>
+      ${S.user.role==='admin'?`
+        <div class="add-holiday-form">
+          <input type="date" id="gh-date" class="input" style="max-width:180px">
+          <input type="text" id="gh-label" class="input" placeholder="Holiday name (e.g. Eid ul-Fitr)">
+          <button class="btn btn-primary" onclick="addGovHol()">Add</button>
+        </div>`:''}
+      <div id="gov-hols-list">
+        ${govHols.length===0 ? `<p class="text-muted">No government holidays on record.</p>` :
+          govHols.sort((a,b)=>b.date.localeCompare(a.date)).map(h=>`
+            <div class="hol-item">
+              <div><strong>${fmtDate(h.date)}</strong> <span class="hol-reason">${h.label}</span></div>
+              ${S.user.role==='admin'?`<button class="btn-icon danger" onclick="removeGovHol('${h.date}')">✕</button>`:''}
+            </div>
+          `).join('')}
+      </div>
+    </div>
+
+    <div class="settings-save-bar">
+      <button class="btn btn-primary btn-lg" onclick="saveSettings()">💾 Save All Settings</button>
+    </div>
   `;
 }
 
 async function saveSettings() {
-  const boolVal = id => document.getElementById(id)?.checked ? 'true' : 'false';
-  const s = {
-    nisab_type  : document.getElementById('s_nisab_type')?.value,
-    nisab_karat : document.getElementById('s_nisab_karat')?.value,
-    zakat_rate  : document.getElementById('s_zakat_rate')?.value,
-    selling_pct : document.getElementById('s_selling_pct')?.value,
-    lunar_days  : document.getElementById('s_lunar_days')?.value,
-    incl_gold   : boolVal('s_incl_gold'),
-    incl_silver : boolVal('s_incl_silver'),
-    incl_dep    : boolVal('s_incl_dep'),
-    incl_icap   : boolVal('s_incl_icap'),
-    incl_imon   : boolVal('s_incl_imon'),
-    incl_lrec   : boolVal('s_incl_lrec'),
-    ded_lpay    : boolVal('s_ded_lpay'),
+  const holidayDays = [...document.querySelectorAll('.hol-day-cb:checked')].map(c=>c.value).join(',');
+  const payload = {
+    targetHrs:  $('s-target').value,
+    minDayHrs:  $('s-min-day').value,
+    minWkHrs:   $('s-min-wk').value,
+    weekStart:  $('s-week-start').value,
+    salary:     $('s-salary').value,
+    monthDays:  $('s-month-days').value,
+    holidayDays,
+  };
+  try {
+    const res = await API.auth('saveSettings', payload);
+    if (res.success) showToast('✅ Settings saved!', 'success');
+    else showToast(res.message, 'error');
+  } catch(err) { showToast('Save failed. Try again.', 'error'); }
+}
+
+async function addPersonalHol() {
+  const date       = $('ph-date').value;
+  const deductible = $('ph-type').value;
+  const reason     = $('ph-reason').value;
+  if (!date) { showToast('Select a date', 'error'); return; }
+  const res = await API.auth('addPersonalHol', { date, deductible, reason });
+  if (res.success) { showToast('Holiday added', 'success'); loadSettings(); }
+  else showToast(res.message, 'error');
+}
+
+async function removePersonalHol(date) {
+  if (!confirm('Remove this holiday?')) return;
+  const res = await API.auth('removePersonalHol', { date });
+  if (res.success) { showToast('Removed', 'info'); loadSettings(); }
+  else showToast(res.message, 'error');
+}
+
+async function addGovHol() {
+  const date  = $('gh-date').value;
+  const label = $('gh-label').value;
+  if (!date)  { showToast('Select a date', 'error'); return; }
+  if (!label) { showToast('Enter holiday name', 'error'); return; }
+  const res = await API.auth('addGovHol', { date, label });
+  if (res.success) { showToast('Government holiday added', 'success'); loadSettings(); }
+  else showToast(res.message, 'error');
+}
+
+async function removeGovHol(date) {
+  if (!confirm('Remove this government holiday?')) return;
+  const res = await API.auth('removeGovHol', { date });
+  if (res.success) { showToast('Removed', 'info'); loadSettings(); }
+  else showToast(res.message, 'error');
+}
+
+// ═══ ADMIN ══════════════════════════════════════════════
+async function loadAdmin() {
+  if (!S.user || S.user.role !== 'admin') {
+    $('tab-admin').innerHTML = `<div class="empty-state"><div class="empty-icon">🔒</div><p>Admin access required.</p></div>`;
+    return;
+  }
+  $('tab-admin').innerHTML = `<div class="loading-placeholder"><div class="spinner"></div></div>`;
+  setLoading(true);
+  try {
+    const [pendRes, allRes] = await Promise.all([
+      API.auth('getPendingUsers'),
+      API.auth('getAllUsers'),
+    ]);
+    renderAdmin(pendRes.users || [], allRes.users || []);
+  } catch(err) { showToast('Failed to load admin data', 'error'); }
+  finally { setLoading(false); }
+}
+
+function renderAdmin(pending, all) {
+  const statusBadge = s => {
+    const m = {approved:'badge-ok',pending:'badge-warn',rejected:'badge-err'};
+    return `<span class="badge ${m[s]||''}">${s}</span>`;
   };
 
-  showLoader('Saving settings…');
-  try {
-    const r = await API.post('saveSettings', s);
-    if (r.error) throw new Error(r.error);
-    toast('✓ Settings saved. Recalculating…', 'success');
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
+  $('tab-admin').innerHTML = `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Admin Panel</h1>
+        <p class="page-sub">Manage users and organization settings</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">⏳ Pending Approvals
+        ${pending.length ? `<span class="badge badge-warn" style="margin-left:6px">${pending.length}</span>` : ''}
+      </h3>
+      ${pending.length === 0
+        ? `<p class="text-muted">No pending approvals. All clear! ✅</p>`
+        : pending.map(u => `
+          <div class="user-approval-row">
+            <div class="user-info">
+              <div class="user-ava">${(u.name||'?')[0].toUpperCase()}</div>
+              <div>
+                <div class="user-name">${u.name}</div>
+                <div class="user-email">${u.email}</div>
+                ${u.phone ? `<div class="user-phone">📞 ${u.phone}</div>` : ''}
+                <div class="user-meta">
+                  Applied: ${u.date || '—'} &nbsp;|&nbsp;
+                  Email: ${u.verified === 'true' ? '✅ Verified' : '⚠ Not verified'}
+                </div>
+              </div>
+            </div>
+            <div class="approval-btns">
+              <button class="btn btn-ok" onclick="approveUser('${u.email}','${u.name.replace(/'/g,"\\'")}')">✓ Approve</button>
+              <button class="btn btn-err" onclick="rejectUser('${u.email}')">✕ Reject</button>
+            </div>
+          </div>
+        `).join('')}
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">👥 All Users <span style="color:var(--txt2);font-weight:400">(${all.length})</span></h3>
+      <div class="users-table">
+        <div class="ut-head">
+          <span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Joined</span>
+        </div>
+        ${all.map(u => `
+          <div class="ut-row">
+            <span class="ut-name">
+              <div class="user-ava sm">${(u.name||'?')[0].toUpperCase()}</div>
+              ${u.name}
+            </span>
+            <span class="ut-email">${u.email}</span>
+            <span><span class="badge ${u.role==='admin'?'badge-pri':''}">${u.role}</span></span>
+            <span>${statusBadge(u.status)}</span>
+            <span style="font-size:12px;color:var(--txt2)">${u.date||'—'}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
-// ══════════════════════════════════════════════
-// GENERIC MODAL
-// ══════════════════════════════════════════════
-
-function openModal({ title, body, wide, save, saveLabel }) {
-  modalCfg = { save };
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML    = body;
-  document.getElementById('modal-save-btn').textContent = saveLabel || 'Save';
-  document.getElementById('modal-box').className     = wide ? 'modal modal-wide' : 'modal';
-  document.getElementById('modal-overlay').classList.remove('hidden');
+async function approveUser(email, name) {
+  if (!confirm(`Approve ${name}?`)) return;
+  const res = await API.auth('approveUser', { userEmail:email });
+  if (res.success) { showToast('✅ ' + res.message, 'success'); loadAdmin(); }
+  else showToast(res.message, 'error');
 }
 
-async function handleModalSave() {
-  if (modalCfg?.save) await modalCfg.save();
+async function rejectUser(email) {
+  if (!confirm('Reject this registration?')) return;
+  const res = await API.auth('rejectUser', { userEmail:email });
+  if (res.success) { showToast('User rejected.', 'info'); loadAdmin(); }
+  else showToast(res.message, 'error');
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.add('hidden');
-  modalCfg = null;
-}
-
-// ══════════════════════════════════════════════
-// WEALTH ITEM MODALS (ADD / EDIT)
-// ══════════════════════════════════════════════
-
-function buildFormHTML(schema, prefill = {}) {
-  return `<div class="form-grid form-grid-2">${
-    schema.fields.map(f => {
-      const val = prefill[f.k] !== undefined ? escHtml(String(prefill[f.k])) : '';
-      if (f.t === 'select') {
-        return `<div class="form-group">
-          <label class="form-label">${f.l}${f.req?' *':''}</label>
-          <select id="f_${f.k.replace(/\s/g,'_')}" class="form-control ${f.cls||''}"
-            onchange="${f.onInput||''}">
-            ${(f.opts||[]).map(o => `<option ${val===o?'selected':''}>${o}</option>`).join('')}
-          </select>
-        </div>`;
-      }
-      if (f.t === 'textarea') {
-        return `<div class="form-group" style="grid-column:1/-1">
-          <label class="form-label">${f.l}${f.req?' *':''}</label>
-          <textarea id="f_${f.k.replace(/\s/g,'_')}" class="form-control ${f.cls||''}"
-            rows="2">${val}</textarea>
-        </div>`;
-      }
-      return `<div class="form-group ${f.fullWidth?'':''}">
-        <label class="form-label">${f.l}${f.req?' *':''}</label>
-        <input id="f_${f.k.replace(/\s/g,'_')}" type="${f.t||'text'}"
-          class="form-control ${f.cls||''}"
-          value="${val}" placeholder="${f.ph||''}"
-          step="${f.step||''}" ${f.onInput?`oninput="${f.onInput}"`:''}
-          ${f.req?'required':''}>
-      </div>`;
-    }).join('')
-  }</div>`;
-}
-
-function getFormData(schema) {
-  const d = {};
-  schema.fields.forEach(f => {
-    const id = `f_${f.k.replace(/\s/g,'_')}`;
-    const el = document.getElementById(id);
-    if (!el) return;
-    const raw = el.value;
-    const isNum = f.t === 'number';
-    d[f.k] = isNum ? (parseFloat(raw) || 0) : raw;
-  });
-  return d;
-}
-
-function openAddModal(schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  openModal({
-    title    : `+ Add ${schema.title}`,
-    body     : buildFormHTML(schema),
-    wide     : true,
-    saveLabel: `Add ${schema.title}`,
-    save     : async () => {
-      const d = getFormData(schema);
-      const reqField = schema.fields.find(f => f.req && !d[f.k]);
-      if (reqField) { toast(`Please fill in "${reqField.l}"`, 'warning'); return; }
-      showLoader('Saving…');
-      try {
-        const r = await API.post('add', d, { sheet: schema.sheet });
-        if (r.error) throw new Error(r.error);
-        toast(`✓ ${schema.title} added`, 'success');
-        closeModal();
-        const all = await API.get('getAllData');
-        if (!all.error) { appData = all; renderAll(); }
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
-    }
-  });
-}
-
-function openEditModal(schemaKey, rowData) {
-  const schema = SCHEMAS[schemaKey];
-  openModal({
-    title    : `✏️ Edit ${schema.title}`,
-    body     : buildFormHTML(schema, rowData),
-    wide     : true,
-    saveLabel: 'Update',
-    save     : async () => {
-      const d = getFormData(schema);
-      showLoader('Updating…');
-      try {
-        const r = await API.post('update', d, { sheet: schema.sheet, row: rowData._row });
-        if (r.error) throw new Error(r.error);
-        toast(`✓ ${schema.title} updated`, 'success');
-        closeModal();
-        const all = await API.get('getAllData');
-        if (!all.error) { appData = all; renderAll(); }
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
-    }
-  });
-}
-
-// ══════════════════════════════════════════════
-// DELETE ITEMS
-// ══════════════════════════════════════════════
-
-async function deleteItem(sheet, row, schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  confirmDialog(`Delete this ${schema?.title || 'entry'}? This cannot be undone.`, async () => {
-    showLoader('Deleting…');
-    try {
-      const r = await API.post('delete', {}, { sheet, row });
-      if (r.error) throw new Error(r.error);
-      toast('Entry deleted', 'success');
-      const all = await API.get('getAllData');
-      if (!all.error) { appData = all; renderAll(); }
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
-  });
-}
-
-// ══════════════════════════════════════════════
-// AUTO-CALCULATE METAL VALUES
-// ══════════════════════════════════════════════
-
-function autoCalcMetal(type) {
-  // Field IDs: f_ + fieldKey.replace(/\s/g,'_')
-  const karatEl = document.getElementById('f_KARAT');
-  const wgtEl   = document.getElementById('f_Weight_(Gram)');
-  const valEl   = document.getElementById('f_Value_(Tk)');
-  const sellEl  = document.getElementById('f_Selling_Value_(Tk)');
-
-  if (!karatEl || !wgtEl) return;
-
-  const karat   = karatEl.value;
-  const weight  = parseFloat(wgtEl.value) || 0;
-  const mktType = type === 'gold' ? 'Gold' : 'Silver';
-  const ppu     = getMktPrice(mktType, karat);
-  const sellPct = parseFloat(appData.settings?.selling_pct || 80) / 100;
-
-  if (ppu > 0) {
-    const val  = +(weight * ppu).toFixed(2);
-    const sell = +(val * sellPct).toFixed(2);
-    if (valEl)  { valEl.value  = val;  valEl.classList.add('auto-fill'); }
-    if (sellEl) { sellEl.value = sell; sellEl.classList.add('auto-fill'); }
-  } else {
-    if (valEl)  valEl.placeholder = '⚠ Set market price first in Market Values';
-    if (sellEl) sellEl.placeholder = '⚠ Set market price first in Market Values';
-  }
-}
-
-function getMktPrice(type, karat) {
-  const mkt = appData.market || [];
-  const row = mkt.find(m => m['Type'] === type && String(m['KARAT']) === String(karat));
-  return row ? +(row['Price Per Gram (Tk)'] || 0) : 0;
-}
-
-// ══════════════════════════════════════════════
-// CONFIRM DIALOG
-// ══════════════════════════════════════════════
-
-function confirmDialog(msg, onOk) {
-  const body = `<div class="confirm-msg">
-    <span class="confirm-icon">⚠️</span>
-    ${escHtml(msg)}
-  </div>`;
-  openModal({
-    title: 'Confirm Action',
-    body,
-    saveLabel: 'Yes, Delete',
-    save: async () => { closeModal(); await onOk(); }
-  });
-  document.getElementById('modal-save-btn').className = 'btn btn-danger';
-}
-
-// ══════════════════════════════════════════════
-// TOAST NOTIFICATIONS
-// ══════════════════════════════════════════════
-
-function toast(msg, type = 'success') {
-  const icons = { success:'✓', error:'✗', warning:'⚠', info:'ℹ' };
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type]||'•'}</span><span>${escHtml(msg)}</span>`;
-  document.getElementById('toast-wrap').appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 350); }, 3500);
-}
-
-// ══════════════════════════════════════════════
-// LOADER
-// ══════════════════════════════════════════════
-
-function showLoader(msg = 'Loading…') {
-  document.getElementById('loader-msg').textContent = msg;
-  document.getElementById('loader').classList.remove('hidden');
-}
-function hideLoader() {
-  document.getElementById('loader').classList.add('hidden');
-}
-
-// ══════════════════════════════════════════════
-// DATE UTILITIES
-// ══════════════════════════════════════════════
-
-function updateDateChips() {
-  const now = new Date();
-  document.getElementById('date-chip').textContent  = now.toLocaleDateString('en-BD', { day:'2-digit', month:'short', year:'numeric' });
-  try {
-    const hijri = new Intl.DateTimeFormat('en-u-ca-islamic', { day:'numeric', month:'long', year:'numeric' }).format(now);
-    document.getElementById('hijri-chip').textContent = hijri;
-  } catch (_) {
-    document.getElementById('hijri-chip').textContent = '';
-  }
-}
-
-function fdate(v) {
-  if (!v) return '—';
-  try {
-    return new Date(v).toLocaleDateString('en-BD', { day:'2-digit', month:'short', year:'numeric' });
-  } catch (_) { return String(v); }
-}
-
-// ══════════════════════════════════════════════
-// NUMBER / CURRENCY FORMATTING
-// ══════════════════════════════════════════════
-
-function tk(n) {
-  const v = parseFloat(n) || 0;
-  return '৳ ' + v.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function num(n) {
-  const v = parseFloat(n) || 0;
-  return v.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function pct(n) {
-  return (parseFloat(n) || 0).toFixed(4) + '%';
-}
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-// ══════════════════════════════════════════════
-// KEYBOARD SHORTCUTS
-// ══════════════════════════════════════════════
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// Close modal on backdrop click
-document.getElementById('modal-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-});
+// ═══ KICK OFF ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
