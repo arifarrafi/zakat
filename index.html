@@ -2,1113 +2,548 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Zakat Tracker | Personal Zakat Management</title>
-
-   
 <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1FDi3mqYv_t9AquNzml9TlFEZli4wQU6B&sz=w64">
 <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1FDi3mqYv_t9AquNzml9TlFEZli4wQU6B&sz=w64">
-
-   
 <style>
-/* ══════════════════════════════════════════════
-   DESIGN TOKENS
-══════════════════════════════════════════════ */
+/* ══════ TOKENS ══════════════════════════════════════════════ */
 :root {
-  --sidebar-bg    : #0C1E10;
-  --sidebar-hover : rgba(255,255,255,0.07);
-  --sidebar-active: rgba(201,168,75,0.12);
-  --sidebar-border: #C9A84C;
-  --sidebar-text  : rgba(255,255,255,0.72);
-  --sidebar-label : rgba(255,255,255,0.35);
-  --sidebar-width : 240px;
+  --sb-bg    :#0C1E10; --sb-hover:rgba(255,255,255,.07);
+  --sb-active:rgba(201,168,75,.13); --gold:#C9A84C; --gold-h:#E5C670;
+  --primary  :#1B5E20; --primary-h:#2E7D32; --primary-lt:#E8F5E9;
+  --danger   :#C62828; --danger-lt:#FFEBEE;
+  --warning  :#E65100; --warning-lt:#FFF3E0;
+  --info     :#1565C0; --info-lt:#E3F2FD;
+  --bg:#EFF3EF; --card:#FFF; --text:#1A2E1A; --muted:#5A7A5A; --light:#8FAC8F;
+  --border:#D4E4D4; --blt:#EBF2EB;
+  --sh0:0 1px 4px rgba(0,0,0,.06); --sh:0 2px 12px rgba(0,0,0,.08);
+  --shm:0 6px 24px rgba(0,0,0,.14);
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px;
+  --sb-w:240px; --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+input,select,textarea,button{font-family:var(--font);font-size:13px}
+input:focus,select:focus,textarea:focus{outline:none}
 
-  --primary       : #1B5E20;
-  --primary-hover : #2E7D32;
-  --primary-light : #E8F5E9;
-  --gold          : #C9A84C;
-  --gold-light    : #FFF8E1;
-  --gold-hover    : #E5C670;
-  --danger        : #C62828;
-  --danger-light  : #FFEBEE;
-  --warning       : #E65100;
-  --warning-light : #FFF3E0;
-  --info          : #1565C0;
-  --info-light    : #E3F2FD;
-  --success       : #1B5E20;
-  --success-light : #E8F5E9;
+/* ══════ BUTTONS ═════════════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:var(--r8);
+  border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap;
+  min-height:40px;touch-action:manipulation}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:var(--gold-h)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#B71C1C}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--bg)}
+.btn-ghost{background:transparent;color:var(--muted)}.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:12px;min-height:34px}
+.btn-icon{padding:8px;border-radius:var(--r8);border:none;cursor:pointer;transition:all .15s;
+  background:transparent;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center}
+.btn-edit{color:var(--info)}.btn-edit:hover{background:var(--info-lt)}
+.btn-del{color:var(--danger)}.btn-del:hover{background:var(--danger-lt)}
 
-  --bg            : #EFF3EF;
-  --card-bg       : #FFFFFF;
-  --header-bg     : #FFFFFF;
-  --text          : #1A2E1A;
-  --text-muted    : #5A7A5A;
-  --text-light    : #8FAC8F;
-  --border        : #D4E4D4;
-  --border-light  : #EBF2EB;
+/* ══════ LAYOUT ══════════════════════════════════════════════ */
+#app{display:flex;min-height:100vh}
+#app.hidden{display:none}
 
-  --shadow-sm     : 0 1px 4px rgba(0,0,0,0.06);
-  --shadow        : 0 2px 12px rgba(0,0,0,0.08);
-  --shadow-md     : 0 4px 20px rgba(0,0,0,0.10);
-  --radius-sm     : 6px;
-  --radius        : 10px;
-  --radius-lg     : 14px;
+/* ══════ SIDEBAR ═════════════════════════════════════════════ */
+.sidebar{width:var(--sb-w);min-height:100vh;background:var(--sb-bg);display:flex;
+  flex-direction:column;position:fixed;top:0;left:0;z-index:200;overflow:hidden;
+  transition:transform .25s ease}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;
+  border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-icon{font-size:26px;line-height:1}.brand-name{font-size:15px;font-weight:700;color:#fff}
+.brand-sub{font-size:10px;color:var(--gold);letter-spacing:1.2px;text-transform:uppercase}
+.nav-list{list-style:none;padding:10px 8px;flex:1;overflow-y:auto}
+.nav-list::-webkit-scrollbar{width:3px}
+.nav-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.nav-label{font-size:9.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--r8);
+  color:rgba(255,255,255,.72);cursor:pointer;transition:all .15s;font-size:13px;
+  border-left:3px solid transparent;margin-bottom:1px;min-height:42px;touch-action:manipulation}
+.nav-item:hover{background:var(--sb-hover);color:#fff}
+.nav-item.active{background:var(--sb-active);color:var(--gold);border-color:var(--gold);font-weight:500}
+.nav-item .ni{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;
+  color:rgba(255,255,255,.35);text-align:center}
+.sidebar-footer span{color:var(--gold)}
 
-  --font          : -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
+/* Mobile sidebar overlay */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;touch-action:none}
+.sb-overlay.active{display:block}
 
-/* ══════════════════════════════════════════════
-   RESET & BASE
-══════════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body {
-  font-family: var(--font);
-  background : var(--bg);
-  color      : var(--text);
-  min-height : 100vh;
-  overflow-x : hidden;
-}
-a { text-decoration: none; color: inherit; }
-input, select, textarea, button { font-family: var(--font); font-size: 13px; }
-input:focus, select:focus, textarea:focus { outline: none; }
+/* ══════ MAIN ════════════════════════════════════════════════ */
+.main{margin-left:var(--sb-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
 
-/* ══════════════════════════════════════════════
-   LAYOUT
-══════════════════════════════════════════════ */
-#app {
-  display       : flex;
-  min-height    : 100vh;
-}
-#app.hidden { display: none; }
+/* ══════ HEADER ══════════════════════════════════════════════ */
+.top-header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 22px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;
+  box-shadow:var(--sh0)}
+.header-left{display:flex;align-items:center;gap:12px;min-width:0}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;border:none;
+  background:transparent;border-radius:var(--r8);touch-action:manipulation}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);transition:all .2s;border-radius:2px}
+.header-left h2{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.date-chip{background:var(--primary-lt);color:var(--primary);padding:4px 10px;border-radius:20px;
+  font-size:11.5px;font-weight:500;white-space:nowrap}
+.hijri-chip{background:#FFF8E1;color:#7B5800;padding:4px 10px;border-radius:20px;
+  font-size:11.5px;font-weight:500;white-space:nowrap}
 
-/* ══════════════════════════════════════════════
-   SIDEBAR
-══════════════════════════════════════════════ */
-.sidebar {
-  width          : var(--sidebar-width);
-  min-height     : 100vh;
-  background     : var(--sidebar-bg);
-  display        : flex;
-  flex-direction : column;
-  position       : fixed;
-  top            : 0; left: 0;
-  z-index        : 100;
-  transition     : width .25s;
-  overflow       : hidden;
-}
+/* ══════ CONTENT ═════════════════════════════════════════════ */
+.content-area{padding:20px 22px;flex:1}
+.section{display:none}.section.active{display:block}
 
-.sidebar-brand {
-  display        : flex;
-  align-items    : center;
-  gap            : 10px;
-  padding        : 22px 18px 16px;
-  border-bottom  : 1px solid rgba(255,255,255,0.08);
-}
-.brand-icon { font-size: 26px; line-height: 1; }
-.brand-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: .3px; }
-.brand-sub  { font-size: 10px; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; }
-
-.nav-list {
-  list-style  : none;
-  padding     : 10px 8px;
-  flex        : 1;
-  overflow-y  : auto;
-}
-.nav-list::-webkit-scrollbar { width: 3px; }
-.nav-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-.nav-label {
-  font-size    : 9.5px;
-  font-weight  : 600;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color        : var(--sidebar-label);
-  padding      : 14px 10px 5px;
-}
-.nav-item {
-  display        : flex;
-  align-items    : center;
-  gap            : 10px;
-  padding        : 9px 10px;
-  border-radius  : var(--radius-sm);
-  color          : var(--sidebar-text);
-  cursor         : pointer;
-  transition     : all .15s;
-  font-size      : 13px;
-  font-weight    : 400;
-  border-left    : 3px solid transparent;
-  margin-bottom  : 1px;
-}
-.nav-item:hover  { background: var(--sidebar-hover); color: #fff; }
-.nav-item.active {
-  background : var(--sidebar-active);
-  color      : var(--gold);
-  border-color: var(--gold);
-  font-weight: 500;
-}
-.nav-item .ni { font-size: 15px; width: 20px; text-align: center; }
-
-.sidebar-footer {
-  padding      : 14px 12px;
-  border-top   : 1px solid rgba(255,255,255,0.08);
-  font-size    : 11px;
-  color        : var(--sidebar-label);
-  text-align   : center;
-}
-.sidebar-footer span { color: var(--gold); }
-
-/* ══════════════════════════════════════════════
-   MAIN CONTENT
-══════════════════════════════════════════════ */
-.main {
-  margin-left : var(--sidebar-width);
-  flex        : 1;
-  min-height  : 100vh;
-  display     : flex;
-  flex-direction: column;
-}
-
-/* TOP HEADER */
-.top-header {
-  background   : var(--header-bg);
-  border-bottom: 1px solid var(--border);
-  padding      : 14px 28px;
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-  position     : sticky;
-  top          : 0;
-  z-index      : 50;
-  box-shadow   : var(--shadow-sm);
-}
-.header-left h2 {
-  font-size  : 18px;
-  font-weight: 700;
-  color      : var(--text);
-}
-.header-left .breadcrumb {
-  font-size: 12px;
-  color    : var(--text-muted);
-  margin-top: 1px;
-}
-.header-right {
-  display    : flex;
-  align-items: center;
-  gap        : 10px;
-}
-.date-chip {
-  background : var(--primary-light);
-  color      : var(--primary);
-  padding    : 4px 10px;
-  border-radius: 20px;
-  font-size  : 12px;
-  font-weight: 500;
-}
-.hijri-chip {
-  background : var(--gold-light);
-  color      : #7B5800;
-  padding    : 4px 10px;
-  border-radius: 20px;
-  font-size  : 12px;
-  font-weight: 500;
-}
-
-/* ══════════════════════════════════════════════
-   BUTTONS
-══════════════════════════════════════════════ */
-.btn {
-  display       : inline-flex;
-  align-items   : center;
-  gap           : 6px;
-  padding       : 8px 16px;
-  border-radius : var(--radius-sm);
-  border        : none;
-  cursor        : pointer;
-  font-size     : 13px;
-  font-weight   : 500;
-  transition    : all .15s;
-  white-space   : nowrap;
-}
-.btn-primary  { background: var(--primary);   color: #fff; }
-.btn-primary:hover  { background: var(--primary-hover); }
-.btn-gold     { background: var(--gold);      color: #fff; }
-.btn-gold:hover     { background: var(--gold-hover); }
-.btn-danger   { background: var(--danger);    color: #fff; }
-.btn-danger:hover   { background: #B71C1C; }
-.btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-outline:hover  { background: var(--bg); }
-.btn-ghost    { background: transparent; color: var(--text-muted); }
-.btn-ghost:hover    { background: var(--bg); color: var(--text); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-icon { padding: 6px; border-radius: var(--radius-sm); border: none; cursor: pointer; transition: all .15s; background: transparent; }
-.btn-edit  { color: var(--info);   } .btn-edit:hover  { background: var(--info-light); }
-.btn-del   { color: var(--danger); } .btn-del:hover   { background: var(--danger-light); }
-
-/* ══════════════════════════════════════════════
-   SECTION WRAPPER
-══════════════════════════════════════════════ */
-.content-area { padding: 24px 28px; flex: 1; }
-
-.section { display: none; }
-.section.active { display: block; }
-
-/* ══════════════════════════════════════════════
-   CARDS
-══════════════════════════════════════════════ */
-.card {
-  background   : var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow);
-  border       : 1px solid var(--border-light);
-}
-.card-header {
-  padding      : 16px 20px 14px;
-  border-bottom: 1px solid var(--border-light);
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-}
-.card-title    { font-size: 14px; font-weight: 600; color: var(--text); }
-.card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.card-body     { padding: 18px 20px; }
-.card-footer   { padding: 12px 20px; border-top: 1px solid var(--border-light); background: #FAFCFA; border-radius: 0 0 var(--radius) var(--radius); }
+/* ══════ CARDS ═══════════════════════════════════════════════ */
+.card{background:var(--card);border-radius:var(--r12);box-shadow:var(--sh);border:1px solid var(--blt)}
+.card-header{padding:14px 18px 12px;border-bottom:1px solid var(--blt);display:flex;
+  align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-size:14px;font-weight:600}.card-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.card-body{padding:16px 18px}.card-footer{padding:12px 18px;border-top:1px solid var(--blt);
+  background:#FAFCFA;border-radius:0 0 var(--r12) var(--r12)}
 
 /* STAT CARDS */
-.stat-cards {
-  display              : grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap                  : 16px;
-  margin-bottom        : 20px;
-}
-.stat-card {
-  background   : var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow);
-  border       : 1px solid var(--border-light);
-  padding      : 18px 20px;
-  position     : relative;
-  overflow     : hidden;
-}
-.stat-card::before {
-  content   : '';
-  position  : absolute;
-  top       : 0; left: 0; right: 0;
-  height    : 3px;
-  background: var(--accent-color, var(--primary));
-}
-.stat-card .sc-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; }
-.stat-card .sc-value { font-size: 22px; font-weight: 700; color: var(--text); margin: 6px 0 2px; }
-.stat-card .sc-sub   { font-size: 11px; color: var(--text-light); }
-.stat-card .sc-icon  { position: absolute; right: 14px; top: 14px; font-size: 28px; opacity: .15; }
-.sc-total  { --accent-color: var(--primary); }
-.sc-nisab  { --accent-color: var(--gold); }
-.sc-due    { --accent-color: #E53935; }
-.sc-paid   { --accent-color: #2E7D32; }
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat-card{background:var(--card);border-radius:var(--r12);box-shadow:var(--sh);
+  border:1px solid var(--blt);padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--ac,var(--primary))}
+.sc-label{font-size:10.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.sc-value{font-size:20px;font-weight:700;margin:6px 0 2px;word-break:break-all}
+.sc-sub{font-size:11px;color:var(--light)}
+.sc-icon{position:absolute;right:12px;top:12px;font-size:26px;opacity:.13}
+.sc-total{--ac:var(--primary)}.sc-nisab{--ac:var(--gold)}.sc-due{--ac:#E53935}.sc-paid{--ac:#2E7D32}
 
-/* BREAKDOWN CARDS */
-.breakdown-grid {
-  display              : grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap                  : 10px;
-  margin-bottom        : 20px;
-}
-.bd-card {
-  background   : var(--card-bg);
-  border-radius: var(--radius-sm);
-  padding      : 12px 14px;
-  border       : 1px solid var(--border-light);
-  box-shadow   : var(--shadow-sm);
-}
-.bd-card .bd-label { font-size: 10px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
-.bd-card .bd-val   { font-size: 14px; font-weight: 700; margin-top: 4px; }
-.bd-card .bd-icon  { font-size: 18px; margin-bottom: 4px; }
-.bd-gold    { border-top: 2px solid var(--gold); }
-.bd-silver  { border-top: 2px solid #90A4AE; }
-.bd-dep     { border-top: 2px solid #42A5F5; }
-.bd-icap    { border-top: 2px solid #66BB6A; }
-.bd-imon    { border-top: 2px solid #FFA726; }
-.bd-lrec    { border-top: 2px solid #AB47BC; }
-.bd-lpay    { border-top: 2px solid #EF5350; }
+/* BREAKDOWN */
+.breakdown-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:18px}
+.bd-card{background:var(--card);border-radius:var(--r8);padding:10px 12px;
+  border:1px solid var(--blt);box-shadow:var(--sh0)}
+.bd-icon{font-size:16px;margin-bottom:3px}.bd-label{font-size:9.5px;font-weight:500;color:var(--muted);text-transform:uppercase}
+.bd-val{font-size:12.5px;font-weight:700;margin-top:3px;word-break:break-all}
+.bd-gold{border-top:2px solid var(--gold)}.bd-silver{border-top:2px solid #90A4AE}
+.bd-dep{border-top:2px solid #42A5F5}.bd-icap{border-top:2px solid #66BB6A}
+.bd-imon{border-top:2px solid #FFA726}.bd-lrec{border-top:2px solid #AB47BC}.bd-lpay{border-top:2px solid #EF5350}
 
-/* ══════════════════════════════════════════════
-   SECTION HEADER
-══════════════════════════════════════════════ */
-.sec-header {
-  display        : flex;
-  align-items    : flex-start;
-  justify-content: space-between;
-  margin-bottom  : 16px;
-}
-.sec-header h3   { font-size: 16px; font-weight: 700; }
-.sec-header p    { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.sec-actions     { display: flex; gap: 8px; align-items: center; }
+/* SEC HEADER */
+.sec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.sec-header h3{font-size:15px;font-weight:700}.sec-header p{font-size:12px;color:var(--muted);margin-top:2px}
+.sec-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-/* ══════════════════════════════════════════════
-   TABLES
-══════════════════════════════════════════════ */
-.table-wrap {
-  overflow-x: auto;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-light);
-}
-table {
-  width          : 100%;
-  border-collapse: collapse;
-  background     : var(--card-bg);
-}
-thead th {
-  background    : var(--primary);
-  color         : #fff;
-  padding       : 11px 14px;
-  font-size     : 11.5px;
-  font-weight   : 600;
-  text-align    : left;
-  white-space   : nowrap;
-  letter-spacing: .4px;
-}
-thead th:first-child { border-radius: var(--radius) 0 0 0; }
-thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
-tbody tr {
-  border-bottom: 1px solid var(--border-light);
-  transition   : background .1s;
-}
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: #F8FBF8; }
-tbody td {
-  padding   : 10px 14px;
-  font-size : 13px;
-  color     : var(--text);
-  vertical-align: middle;
-}
-.td-num  { text-align: right; font-variant-numeric: tabular-nums; font-family: 'Courier New', monospace; font-size: 12.5px; }
-.td-ser  { color: var(--text-muted); font-size: 12px; width: 40px; }
-.td-act  { width: 80px; text-align: center; }
-tfoot td {
-  padding    : 11px 14px;
-  font-weight: 700;
-  font-size  : 13px;
-  background : var(--primary-light);
-  color      : var(--primary);
-  border-top : 2px solid var(--primary);
-}
-.tfoot-num { text-align: right; }
-.empty-row td {
-  text-align: center;
-  padding   : 40px;
-  color     : var(--text-muted);
-  font-size : 13px;
-}
-.empty-row .empty-icon { font-size: 32px; display: block; margin-bottom: 8px; }
-
-/* TABLE INFO BAR */
-.table-info {
-  display        : flex;
-  align-items    : center;
-  justify-content: space-between;
-  padding        : 8px 14px;
-  background     : var(--primary-light);
-  border-radius  : var(--radius-sm) var(--radius-sm) 0 0;
-  border         : 1px solid var(--border-light);
-  border-bottom  : none;
-}
-.table-info span { font-size: 12px; color: var(--primary); font-weight: 500; }
+/* ══════ TABLES ══════════════════════════════════════════════ */
+.table-wrap{overflow-x:auto;border-radius:var(--r12);box-shadow:var(--sh);border:1px solid var(--blt)}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+thead th{background:var(--primary);color:#fff;padding:10px 12px;font-size:11px;font-weight:600;
+  text-align:left;white-space:nowrap;letter-spacing:.4px}
+thead th:first-child{border-radius:var(--r12) 0 0 0}
+thead th:last-child{border-radius:0 var(--r12) 0 0}
+tbody tr{border-bottom:1px solid var(--blt);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#F8FBF8}
+tbody td{padding:10px 12px;font-size:13px;vertical-align:middle}
+.td-num{text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px}
+.td-ser{color:var(--muted);font-size:12px;width:40px}
+.td-act{width:80px;text-align:center;white-space:nowrap}
+tfoot td{padding:10px 12px;font-weight:700;font-size:13px;background:var(--primary-lt);
+  color:var(--primary);border-top:2px solid var(--primary)}
+.tfoot-num{text-align:right}
+.empty-row td{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:30px;display:block;margin-bottom:8px}
+.table-info{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;
+  background:var(--primary-lt);border-radius:var(--r12) var(--r12) 0 0;
+  border:1px solid var(--blt);border-bottom:none}
+.table-info span{font-size:12px;color:var(--primary);font-weight:500}
 
 /* BADGES */
-.badge {
-  display      : inline-block;
-  padding      : 2px 8px;
-  border-radius: 12px;
-  font-size    : 11px;
-  font-weight  : 600;
-  white-space  : nowrap;
-}
-.badge-active    { background: var(--success-light); color: var(--success); }
-.badge-completed { background: var(--info-light);    color: var(--info); }
-.badge-draft     { background: #F5F5F5;              color: #616161; }
-.badge-yes       { background: var(--success-light); color: var(--success); }
-.badge-no        { background: var(--danger-light);  color: var(--danger); }
-.badge-gold      { background: var(--gold-light);    color: #7B5800; }
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-active{background:var(--primary-lt);color:var(--primary)}
+.badge-completed{background:var(--info-lt);color:var(--info)}
+.badge-draft{background:#F5F5F5;color:#616161}
+.badge-yes{background:var(--primary-lt);color:var(--primary)}
+.badge-no{background:var(--danger-lt);color:var(--danger)}
 
-/* ══════════════════════════════════════════════
-   FORMS
-══════════════════════════════════════════════ */
-.form-grid { display: grid; gap: 14px; }
-.form-grid-2 { grid-template-columns: 1fr 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-label {
-  font-size  : 12px;
-  font-weight: 600;
-  color      : var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-.form-control {
-  padding      : 9px 12px;
-  border       : 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  background   : var(--card-bg);
-  color        : var(--text);
-  font-size    : 13px;
-  transition   : border-color .15s;
-  width        : 100%;
-}
-.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(27,94,32,.1); }
-.form-control.auto-fill { background: var(--primary-light); color: var(--primary); }
-.form-hint { font-size: 11px; color: var(--text-light); }
-.form-section-title {
-  font-size    : 11px;
-  font-weight  : 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color        : var(--text-muted);
-  padding-bottom: 6px;
-  border-bottom : 1px solid var(--border-light);
-  margin-bottom : 4px;
-  grid-column  : 1 / -1;
-}
+/* ══════ FORMS ═══════════════════════════════════════════════ */
+.form-grid{display:grid;gap:14px}.form-grid-2{grid-template-columns:1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.form-control{padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--r8);
+  background:var(--card);color:var(--text);font-size:14px;transition:border-color .15s;width:100%;
+  min-height:42px;-webkit-appearance:none}
+.form-control:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,94,32,.1)}
+.form-control.auto-fill{background:var(--primary-lt);color:var(--primary)}
+.form-hint{font-size:11px;color:var(--light)}
 
 /* TOGGLE */
-.toggle-group { display: flex; align-items: center; gap: 8px; }
-.toggle-label  { font-size: 13px; color: var(--text); }
-.toggle {
-  position : relative;
-  width    : 38px;
-  height   : 20px;
-  flex-shrink: 0;
-}
-.toggle input { display: none; }
-.toggle-slider {
-  position     : absolute;
-  inset        : 0;
-  background   : #CCC;
-  border-radius: 20px;
-  cursor       : pointer;
-  transition   : .2s;
-}
-.toggle-slider::before {
-  content      : '';
-  position     : absolute;
-  width        : 14px; height: 14px;
-  left         : 3px; top: 3px;
-  background   : white;
-  border-radius: 50%;
-  transition   : .2s;
-}
-.toggle input:checked + .toggle-slider { background: var(--primary); }
-.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle-group{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--blt)}
+.toggle-label{font-size:13px;color:var(--text)}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{display:none}
+.toggle-slider{position:absolute;inset:0;background:#CCC;border-radius:24px;cursor:pointer;transition:.2s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;
+  background:white;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--primary)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
 
-/* ══════════════════════════════════════════════
-   MODAL
-══════════════════════════════════════════════ */
-.modal-overlay {
-  position        : fixed;
-  inset           : 0;
-  background      : rgba(0,0,0,0.5);
-  backdrop-filter : blur(3px);
-  z-index         : 500;
-  display         : flex;
-  align-items     : center;
-  justify-content : center;
-  padding         : 20px;
-  animation       : fadeIn .15s;
-}
-.modal-overlay.hidden { display: none; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* ══════ MODAL ═══════════════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .15s}
+.modal-overlay.hidden{display:none}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border-radius:var(--r16);box-shadow:var(--shm);width:100%;
+  max-width:520px;max-height:90vh;display:flex;flex-direction:column;animation:slideUp .2s}
+.modal-wide{max-width:640px}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.modal-header{padding:16px 20px 14px;border-bottom:1px solid var(--blt);
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:transparent;border:none;cursor:pointer;color:var(--muted);
+  font-size:20px;padding:4px 8px;border-radius:var(--r8);transition:all .1s;min-width:36px;min-height:36px}
+.modal-close:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 20px;overflow-y:auto}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--blt);display:flex;gap:10px;
+  justify-content:flex-end;background:#FAFCFA;border-radius:0 0 var(--r16) var(--r16)}
 
-.modal {
-  background   : var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow   : var(--shadow-md);
-  width        : 100%;
-  max-width    : 540px;
-  max-height   : 90vh;
-  display      : flex;
-  flex-direction: column;
-  animation    : slideUp .2s;
-}
-.modal-wide { max-width: 680px; }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* ══════ PROGRESS BAR ════════════════════════════════════════ */
+.bar-wrap{background:var(--blt);border-radius:20px;height:8px;overflow:hidden;margin:6px 0}
+.bar{height:100%;border-radius:20px;background:var(--primary);transition:width .5s ease;min-width:3px}
+.bar.over{background:var(--gold)}
 
-.modal-header {
-  padding      : 18px 22px 14px;
-  border-bottom: 1px solid var(--border-light);
-  display      : flex;
-  align-items  : center;
-  justify-content: space-between;
-}
-.modal-title   { font-size: 16px; font-weight: 700; }
-.modal-close {
-  background: transparent; border: none; cursor: pointer;
-  color: var(--text-muted); font-size: 18px; padding: 4px 8px;
-  border-radius: var(--radius-sm); transition: all .1s;
-}
-.modal-close:hover { background: var(--bg); color: var(--text); }
-.modal-body    { padding: 20px 22px; overflow-y: auto; }
-.modal-footer  {
-  padding      : 14px 22px;
-  border-top   : 1px solid var(--border-light);
-  display      : flex;
-  gap          : 10px;
-  justify-content: flex-end;
-  background   : #FAFCFA;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
+/* ══════ MARKET GRID ═════════════════════════════════════════ */
+.mkt-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--primary);display:inline-block}
+.mkt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.mkt-card{background:var(--card);border:1px solid var(--blt);border-radius:var(--r12);
+  padding:14px;box-shadow:var(--sh0)}
+.mkt-gold{border-top:3px solid var(--gold)}.mkt-silver{border-top:3px solid #90A4AE}
+.mkt-type{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.mkt-karat{font-size:18px;font-weight:800;margin:2px 0}
+.mkt-price{font-size:14px;font-weight:700;color:var(--primary)}
+.mkt-price span{font-size:11px;color:var(--muted);font-weight:400}
+.mkt-updated{font-size:10px;color:var(--light);margin-top:4px}
+.mkt-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r8);
+  font-size:13px;margin-top:10px;min-height:38px;-webkit-appearance:none}
+.mkt-input:focus{outline:none;border-color:var(--primary)}
 
-/* ══════════════════════════════════════════════
-   NISAB / PROGRESS
-══════════════════════════════════════════════ */
-.nisab-bar-wrap {
-  background   : var(--border-light);
-  border-radius: 20px;
-  height       : 8px;
-  overflow     : hidden;
-  margin       : 6px 0;
-}
-.nisab-bar {
-  height      : 100%;
-  border-radius: 20px;
-  background  : var(--primary);
-  transition  : width .5s ease;
-  min-width   : 4px;
-}
-.nisab-bar.over { background: var(--gold); }
+/* ══════ TIMEFRAME CARDS ════════════════════════════════════ */
+.tf-list{display:flex;flex-direction:column;gap:10px}
+.tf-card{background:var(--card);border:1px solid var(--blt);border-radius:var(--r12);
+  padding:14px 16px;box-shadow:var(--sh0);display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}
+.tf-card.tf-active{border-left:3px solid var(--gold)}
+.tf-label{font-size:13px;font-weight:700}.tf-dates{font-size:12px;color:var(--muted);margin-top:2px}
+.tf-meta{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+.tf-meta span{font-size:11px;color:var(--light)}.tf-meta b{color:var(--text)}
+.tf-actions{display:flex;gap:6px}
 
-/* ══════════════════════════════════════════════
-   MARKET GRID
-══════════════════════════════════════════════ */
-.market-grid {
-  display              : grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap                  : 14px;
-}
-.mkt-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 14px 16px;
-  box-shadow   : var(--shadow-sm);
-}
-.mkt-type  { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-.mkt-karat { font-size: 20px; font-weight: 800; color: var(--text); margin: 2px 0; }
-.mkt-price { font-size: 15px; font-weight: 700; color: var(--primary); }
-.mkt-price span { font-size: 11px; color: var(--text-muted); font-weight: 400; }
-.mkt-updated { font-size: 10px; color: var(--text-light); margin-top: 4px; }
-.mkt-gold   { border-top: 3px solid var(--gold); }
-.mkt-silver { border-top: 3px solid #90A4AE; }
-.mkt-edit-row { display: flex; gap: 6px; margin-top: 10px; }
-.mkt-edit-row input {
-  flex: 1; padding: 5px 8px;
-  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-  font-size: 12px;
-}
-.mkt-edit-row input:focus { border-color: var(--primary); }
-.mkt-edit-row button { flex-shrink: 0; }
+/* ══════ PAYMENTS TABLE ══════════════════════════════════════ */
+.rpay-table{width:100%;border-collapse:collapse}
+.rpay-table th{font-size:11px;font-weight:600;color:var(--muted);padding:6px 10px;
+  text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.rpay-table td{padding:9px 10px;font-size:12px;border-bottom:1px solid var(--blt)}
+.rpay-table tr:last-child td{border-bottom:none}
 
-/* ══════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════ */
-#toast-wrap {
-  position   : fixed;
-  bottom     : 24px;
-  right      : 24px;
-  z-index    : 9999;
-  display    : flex;
-  flex-direction: column;
-  gap        : 8px;
-}
-.toast {
-  display      : flex;
-  align-items  : center;
-  gap          : 10px;
-  padding      : 12px 16px;
-  border-radius: var(--radius);
-  box-shadow   : var(--shadow-md);
-  font-size    : 13px;
-  font-weight  : 500;
-  animation    : toastIn .25s;
-  min-width    : 260px;
-  max-width    : 380px;
-}
-@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
-.toast-success { background: #1B5E20; color: #fff; }
-.toast-error   { background: #C62828; color: #fff; }
-.toast-info    { background: #1565C0; color: #fff; }
-.toast-warning { background: #E65100; color: #fff; }
-.toast-icon    { font-size: 16px; }
+/* ══════ HISTORY CARDS ══════════════════════════════════════ */
+.hist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.hist-card{background:var(--card);border:1px solid var(--blt);border-radius:var(--r12);
+  padding:14px 16px;box-shadow:var(--sh0);text-align:center}
+.hc-label{font-size:10.5px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.8px}
+.hc-val{font-size:20px;font-weight:800;margin-top:6px}.hc-sub{font-size:11px;color:var(--light);margin-top:2px}
+.hc-g{color:var(--primary)}.hc-r{color:var(--danger)}.hc-o{color:var(--gold)}
 
-/* ══════════════════════════════════════════════
-   LOADER
-══════════════════════════════════════════════ */
-#loader {
-  position  : fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(4px);
-  z-index   : 1000;
-  display   : flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap       : 14px;
-}
-#loader.hidden { display: none; }
-.spinner {
-  width : 42px; height: 42px;
-  border: 4px solid rgba(255,255,255,0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-msg { color: #fff; font-size: 14px; font-weight: 500; }
+/* ══════ SETTINGS ═══════════════════════════════════════════ */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ss-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);margin-bottom:12px;padding-bottom:5px;border-bottom:2px solid var(--primary);
+  display:inline-block}
 
-/* ══════════════════════════════════════════════
-   SETUP OVERLAY
-══════════════════════════════════════════════ */
-#setup-overlay {
-  position  : fixed; inset: 0;
-  background: linear-gradient(135deg, #0C1E10 0%, #1B3A20 60%, #0A1A0D 100%);
-  z-index   : 2000;
-  display   : flex;
-  align-items: center;
-  justify-content: center;
-  padding   : 20px;
-}
-#setup-overlay.hidden { display: none; }
+/* ══════ LOGIN OVERLAY ═══════════════════════════════════════ */
+#login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0C1E10 0%,#1B3A20 55%,#0A1A0D 100%);
+  z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px}
+#login-overlay.hidden{display:none}
+.login-card{background:rgba(255,255,255,.06);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:40px 36px 32px;
+  width:100%;max-width:380px;text-align:center}
+.login-logo{font-size:54px;margin-bottom:10px}
+.login-card h2{font-size:22px;font-weight:800;color:#fff;margin-bottom:6px}
+.login-card p{font-size:12.5px;color:rgba(255,255,255,.55);margin-bottom:24px}
+.login-input{width:100%;padding:14px 16px;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;
+  background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:12px;
+  letter-spacing:2px;text-align:center;-webkit-appearance:none}
+.login-input::placeholder{color:rgba(255,255,255,.3);letter-spacing:0}
+.login-input:focus{outline:none;border-color:var(--gold)}
+.login-btn{width:100%;padding:14px;background:var(--gold);color:#1A0F00;border:none;
+  border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;touch-action:manipulation}
+.login-btn:hover{background:var(--gold-h)}
+.login-err{color:#FF8A80;font-size:12px;margin-top:8px;min-height:20px}
+.login-hint{font-size:11px;color:rgba(255,255,255,.3);margin-top:14px}
 
-.setup-card {
-  background   : rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-  border       : 1px solid rgba(255,255,255,0.12);
-  border-radius: 20px;
-  padding      : 42px 40px 36px;
-  width        : 100%;
-  max-width    : 480px;
-  text-align   : center;
-}
-.setup-logo { font-size: 56px; margin-bottom: 12px; }
-.setup-card h1 { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-.setup-card > p { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 28px; }
-.setup-steps {
-  text-align   : left;
-  margin-bottom: 24px;
-  background   : rgba(255,255,255,0.04);
-  border-radius: 10px;
-  padding      : 16px 18px;
-}
-.setup-steps h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 10px; }
-.setup-steps ol { padding-left: 18px; }
-.setup-steps li { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.8; }
-.setup-steps code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #80CBC4; }
+/* ══════ SETUP OVERLAY ═══════════════════════════════════════ */
+#setup-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0C1E10 0%,#1B3A20 60%,#0A1A0D 100%);
+  z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+#setup-overlay.hidden{display:none}
+.setup-card{background:rgba(255,255,255,.06);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:36px 32px 28px;
+  width:100%;max-width:460px;text-align:center}
+.setup-logo{font-size:50px;margin-bottom:10px}
+.setup-card h1{font-size:22px;font-weight:800;color:#fff;margin-bottom:5px}
+.setup-card>p{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:22px}
+.setup-steps{text-align:left;margin-bottom:20px;background:rgba(255,255,255,.04);
+  border-radius:10px;padding:14px 16px}
+.setup-steps h4{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--gold);margin-bottom:8px}
+.setup-steps ol{padding-left:16px}
+.setup-steps li{font-size:12px;color:rgba(255,255,255,.6);line-height:1.9}
+.setup-steps code{background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;font-size:11px;color:#80CBC4}
+.setup-input{width:100%;padding:12px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;
+  background:rgba(255,255,255,.07);color:#fff;font-size:13px;margin-bottom:10px;-webkit-appearance:none}
+.setup-input::placeholder{color:rgba(255,255,255,.3)}
+.setup-input:focus{outline:none;border-color:var(--gold)}
+.setup-btn{width:100%;padding:13px;background:var(--gold);color:#1A0F00;border:none;
+  border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.setup-btn:hover{background:var(--gold-h)}
+.setup-err{color:#FF8A80;font-size:12px;margin-top:8px}
 
-.setup-input {
-  width        : 100%;
-  padding      : 12px 16px;
-  border       : 1.5px solid rgba(255,255,255,0.15);
-  border-radius: 10px;
-  background   : rgba(255,255,255,0.07);
-  color        : #fff;
-  font-size    : 13px;
-  margin-bottom: 12px;
-}
-.setup-input::placeholder { color: rgba(255,255,255,0.3); }
-.setup-input:focus { outline: none; border-color: var(--gold); }
+/* ══════ TOAST ═══════════════════════════════════════════════ */
+#toast-wrap{position:fixed;bottom:20px;right:16px;z-index:9999;display:flex;
+  flex-direction:column;gap:8px;max-width:340px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:var(--r12);
+  box-shadow:var(--shm);font-size:13px;font-weight:500;animation:toastIn .25s;pointer-events:auto}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.toast-success{background:#1B5E20;color:#fff}.toast-error{background:#C62828;color:#fff}
+.toast-info{background:#1565C0;color:#fff}.toast-warning{background:#E65100;color:#fff}
+.toast-icon{font-size:15px}
 
-.setup-btn {
-  width        : 100%;
-  padding      : 12px;
-  background   : var(--gold);
-  color        : #1A0F00;
-  border       : none;
-  border-radius: 10px;
-  font-size    : 14px;
-  font-weight  : 700;
-  cursor       : pointer;
-  transition   : all .15s;
-}
-.setup-btn:hover { background: var(--gold-hover); transform: translateY(-1px); }
-.setup-error { color: #FF8A80; font-size: 12px; margin-top: 8px; }
+/* ══════ LOADER ══════════════════════════════════════════════ */
+#loader{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#loader.hidden{display:none}
+.spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{color:#fff;font-size:14px;font-weight:500}
 
-/* ══════════════════════════════════════════════
-   SETTINGS PAGE
-══════════════════════════════════════════════ */
-.settings-grid {
-  display              : grid;
-  grid-template-columns: 1fr 1fr;
-  gap                  : 18px;
-}
-.settings-section { margin-bottom: 6px; }
-.settings-section .ss-title {
-  font-size    : 11px;
-  font-weight  : 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color        : var(--text-muted);
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom : 2px solid var(--primary);
-  display      : inline-block;
-}
+/* ══════ MISC ════════════════════════════════════════════════ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mt-14{margin-top:14px}
+.text-right{text-align:right}.text-center{text-align:center}.text-muted{color:var(--muted)}
+.fw7{font-weight:700}.flex{display:flex;align-items:center}.flex-b{display:flex;align-items:center;justify-content:space-between}
+.confirm-msg{text-align:center;padding:10px 0}
+.confirm-icon{font-size:40px;display:block;margin-bottom:10px}
+.info-box{padding:12px 15px;border-radius:var(--r8);font-size:12.5px}
+.info-gold{background:var(--warning-lt);border-left:3px solid var(--gold)}
+.info-green{background:var(--primary-lt);border-left:3px solid var(--primary)}
 
-/* TIMEFRAME CARDS */
-.tf-list { display: flex; flex-direction: column; gap: 10px; }
-.tf-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 16px 18px;
-  box-shadow   : var(--shadow-sm);
-  display      : grid;
-  grid-template-columns: 1fr auto;
-  gap          : 8px;
-  align-items  : start;
+/* ══════ RESPONSIVE ══════════════════════════════════════════ */
+@media (max-width:900px){
+  .stat-cards{grid-template-columns:repeat(2,1fr)}
+  .breakdown-grid{grid-template-columns:repeat(4,1fr)}
+  .settings-grid{grid-template-columns:1fr}
+  .mkt-grid{grid-template-columns:repeat(2,1fr)}
 }
-.tf-card.tf-active { border-left: 3px solid var(--gold); }
-.tf-label   { font-size: 14px; font-weight: 700; }
-.tf-dates   { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.tf-meta    { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-.tf-meta span { font-size: 11px; color: var(--text-light); }
-.tf-meta b  { color: var(--text); }
-.tf-actions { display: flex; gap: 6px; }
-
-/* RECENT PAYMENTS TABLE */
-.rpay-table { width: 100%; border-collapse: collapse; }
-.rpay-table th { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .5px; }
-.rpay-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--border-light); }
-.rpay-table tr:last-child td { border-bottom: none; }
-
-/* LIFETIME HISTORY */
-.history-grid {
-  display              : grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap                  : 14px;
-  margin-bottom        : 20px;
+@media (max-width:767px){
+  :root{--sb-w:240px}
+  .sidebar{transform:translateX(-240px);position:fixed}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 20px rgba(0,0,0,.35)}
+  .main{margin-left:0}
+  .hamburger{display:flex}
+  .date-chip,.hijri-chip{display:none}
+  .breakdown-grid{grid-template-columns:repeat(2,1fr)}
+  .hist-grid{grid-template-columns:1fr 1fr}
+  .grid-2{grid-template-columns:1fr}
+  .content-area{padding:14px 12px}
+  .top-header{padding:10px 14px}
+  .modal{max-width:100%;max-height:92vh;border-radius:20px 20px 0 0;margin:auto 0 0}
+  .modal-overlay{align-items:flex-end;padding:0}
+  .header-left h2{font-size:14px}
+  .tf-card{grid-template-columns:1fr}
+  .tf-actions{justify-content:flex-end}
+  .mkt-grid{grid-template-columns:1fr 1fr}
+  .sec-header{flex-direction:column;align-items:flex-start}
+  .sec-actions{width:100%;justify-content:flex-end}
 }
-.hist-card {
-  background   : var(--card-bg);
-  border       : 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding      : 14px 16px;
-  box-shadow   : var(--shadow-sm);
-  text-align   : center;
+@media (max-width:480px){
+  .stat-cards{grid-template-columns:1fr 1fr}
+  .sc-value{font-size:16px}
+  .form-grid-2{grid-template-columns:1fr}
+  .hist-grid{grid-template-columns:1fr}
+  .breakdown-grid{grid-template-columns:repeat(2,1fr)}
+  .modal-footer{flex-direction:column-reverse}
+  .modal-footer .btn{width:100%;justify-content:center}
+  table{font-size:12px}
+  tbody td{padding:8px 9px}
+  thead th{padding:9px 9px;font-size:10.5px}
+  .btn{font-size:12.5px}
+  .login-card{padding:32px 22px 26px}
+  .setup-card{padding:28px 18px 24px}
 }
-.hist-card .hc-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .8px; }
-.hist-card .hc-val   { font-size: 20px; font-weight: 800; margin-top: 6px; }
-.hist-card .hc-sub   { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-.hc-green { color: var(--primary); }
-.hc-gold  { color: var(--gold); }
-.hc-red   { color: var(--danger); }
-
-/* CONFIRM MODAL */
-.confirm-msg { font-size: 14px; color: var(--text); text-align: center; padding: 10px 0; }
-.confirm-msg .confirm-icon { font-size: 40px; display: block; margin-bottom: 10px; }
-
-/* MISC */
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.text-muted  { color: var(--text-muted); }
-.fw-bold     { font-weight: 700; }
-.mb-16       { margin-bottom: 16px; }
-.mb-20       { margin-bottom: 20px; }
-.mt-16       { margin-top: 16px; }
-.gap-8       { gap: 8px; }
-.flex        { display: flex; align-items: center; }
-.flex-between{ display: flex; align-items: center; justify-content: space-between; }
-.grid-2      { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.nisab-met   { color: var(--success); font-weight: 700; }
-.nisab-unmet { color: var(--danger); font-weight: 700; }
-
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* ══════════════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  .stat-cards       { grid-template-columns: repeat(2, 1fr); }
-  .breakdown-grid   { grid-template-columns: repeat(4, 1fr); }
-  .settings-grid    { grid-template-columns: 1fr; }
-  .market-grid      { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 640px) {
-  :root { --sidebar-width: 0px; }
-  .sidebar { transform: translateX(-240px); }
-  .sidebar.open { transform: none; width: 240px; }
-  .main { margin-left: 0; }
-  .stat-cards       { grid-template-columns: 1fr 1fr; }
-  .breakdown-grid   { grid-template-columns: repeat(2, 1fr); }
-  .history-grid     { grid-template-columns: 1fr; }
-  .content-area     { padding: 16px; }
-  .form-grid-2      { grid-template-columns: 1fr; }
-}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     SETUP OVERLAY (first run)
-══════════════════════════════════════════ -->
-<div id="setup-overlay">
-  <div class="setup-card">
-    <div class="setup-logo">☪️</div>
-    <h1>Zakat Tracker</h1>
-    <p>Your personal Zakat calculation & tracking system</p>
-
-    <div class="setup-steps">
-      <h4>📋 Backend Setup (one-time)</h4>
-      <ol>
-        <li>Create a new <b>Google Spreadsheet</b></li>
-        <li>Go to <b>Extensions → Apps Script</b></li>
-        <li>Paste the <code>Code.gs</code> file contents &amp; Save</li>
-        <li>Run <code>setupAll()</code> from the Run menu</li>
-        <li>Deploy as <b>Web App</b> (Anyone access) &amp; copy the URL</li>
-      </ol>
-    </div>
-
-    <input id="gas-url-input" type="url" class="setup-input"
-      placeholder="https://script.google.com/macros/s/…/exec">
-    <button class="setup-btn" onclick="connectGAS()">⚡ Connect &amp; Initialize</button>
-    <div id="setup-error" class="setup-error"></div>
+<!-- ══ LOGIN OVERLAY ════════════════════════════════════════ -->
+<div id="login-overlay" class="hidden">
+  <div class="login-card">
+    <div class="login-logo">☪️</div>
+    <h2>Zakat Tracker</h2>
+    <p>Enter your password to access your data</p>
+    <input id="login-pwd" type="password" class="login-input" placeholder="Enter password"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">🔓 Login</button>
+    <div id="login-err" class="login-err"></div>
+    <div class="login-hint">Forgot password? Open Apps Script → saveSettings({auth_password:''})</div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     MAIN APP
-══════════════════════════════════════════ -->
+<!-- ══ SETUP OVERLAY ════════════════════════════════════════ -->
+<div id="setup-overlay" class="hidden">
+  <div class="setup-card">
+    <div class="setup-logo">☪️</div>
+    <h1>Zakat Tracker</h1>
+    <p>Connect your Google Apps Script backend</p>
+    <div class="setup-steps">
+      <h4>📋 One-time Backend Setup</h4>
+      <ol>
+        <li>Create a new <b>Google Spreadsheet</b></li>
+        <li><b>Extensions → Apps Script</b> → paste <code>Code.gs</code></li>
+        <li>Run <code>setupAll()</code> &amp; authorize</li>
+        <li><b>Deploy → New Deployment → Web App</b> (Anyone)</li>
+        <li>Copy the <code>/exec</code> URL below</li>
+      </ol>
+    </div>
+    <input id="gas-url-input" type="url" class="setup-input"
+      placeholder="https://script.google.com/macros/s/…/exec">
+    <button class="setup-btn" onclick="connectGAS()">⚡ Connect &amp; Initialize</button>
+    <div id="setup-error" class="setup-err"></div>
+  </div>
+</div>
+
+<!-- ══ APP ═══════════════════════════════════════════════════ -->
 <div id="app" class="hidden">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
   <!-- SIDEBAR -->
-  <nav class="sidebar">
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <span class="brand-icon">☪️</span>
-      <div>
-        <div class="brand-name">Zakat Tracker</div>
-        <div class="brand-sub">Zakat Manager</div>
-      </div>
+      <div><div class="brand-name">Zakat Tracker</div><div class="brand-sub">Personal Zakat</div></div>
     </div>
-
     <ul class="nav-list">
-      <li><div class="nav-item active" onclick="navigate('dashboard')" data-sec="dashboard">
-        <span class="ni">🏠</span> Dashboard
-      </div></li>
-
+      <li><div class="nav-item active" onclick="nav('dashboard')" data-sec="dashboard"><span class="ni">🏠</span>Dashboard</div></li>
       <li><div class="nav-label">WEALTH ASSETS</div></li>
-      <li><div class="nav-item" onclick="navigate('gold')" data-sec="gold">
-        <span class="ni">🏅</span> Gold
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('silver')" data-sec="silver">
-        <span class="ni">🥈</span> Silver
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('deposits')" data-sec="deposits">
-        <span class="ni">🏦</span> Deposits
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('invCap')" data-sec="invCap">
-        <span class="ni">📈</span> Capital Invest.
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('invMon')" data-sec="invMon">
-        <span class="ni">💹</span> Monthly Invest.
-      </div></li>
-
+      <li><div class="nav-item" onclick="nav('gold')"     data-sec="gold">    <span class="ni">🏅</span>Gold</div></li>
+      <li><div class="nav-item" onclick="nav('silver')"   data-sec="silver">  <span class="ni">🥈</span>Silver</div></li>
+      <li><div class="nav-item" onclick="nav('deposits')" data-sec="deposits"><span class="ni">🏦</span>Deposits</div></li>
+      <li><div class="nav-item" onclick="nav('invCap')"   data-sec="invCap">  <span class="ni">📈</span>Capital Invest.</div></li>
+      <li><div class="nav-item" onclick="nav('invMon')"   data-sec="invMon">  <span class="ni">💹</span>Monthly Invest.</div></li>
       <li><div class="nav-label">LOANS</div></li>
-      <li><div class="nav-item" onclick="navigate('loanRec')" data-sec="loanRec">
-        <span class="ni">📤</span> Receivable
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('loanPay')" data-sec="loanPay">
-        <span class="ni">📥</span> Payable
-      </div></li>
-
+      <li><div class="nav-item" onclick="nav('loanRec')"  data-sec="loanRec"> <span class="ni">📤</span>Receivable</div></li>
+      <li><div class="nav-item" onclick="nav('loanPay')"  data-sec="loanPay"> <span class="ni">📥</span>Payable</div></li>
       <li><div class="nav-label">REFERENCE</div></li>
-      <li><div class="nav-item" onclick="navigate('market')" data-sec="market">
-        <span class="ni">📊</span> Market Values
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('timeframes')" data-sec="timeframes">
-        <span class="ni">📅</span> Timeframes
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('payments')" data-sec="payments">
-        <span class="ni">💸</span> Payments
-      </div></li>
-      <li><div class="nav-item" onclick="navigate('settings')" data-sec="settings">
-        <span class="ni">⚙️</span> Settings
-      </div></li>
+      <li><div class="nav-item" onclick="nav('market')"    data-sec="market">    <span class="ni">📊</span>Market Values</div></li>
+      <li><div class="nav-item" onclick="nav('timeframes')"data-sec="timeframes"><span class="ni">📅</span>Timeframes</div></li>
+      <li><div class="nav-item" onclick="nav('payments')"  data-sec="payments">  <span class="ni">💸</span>Payments</div></li>
+      <li><div class="nav-item" onclick="nav('settings')"  data-sec="settings">  <span class="ni">⚙️</span>Settings</div></li>
     </ul>
-
-    <div class="sidebar-footer">
-      ☪️ <span>Zakat</span> · Nisab · Timeframe
-    </div>
+    <div class="sidebar-footer"><span>☪️ Zakat</span> · Nisab · Tracking</div>
   </nav>
 
   <!-- MAIN -->
   <div class="main">
-    <!-- TOP HEADER -->
     <header class="top-header">
       <div class="header-left">
-        <h2 id="page-title">Dashboard</h2>
-        <div id="page-breadcrumb" class="breadcrumb">Overview of your Zakat status</div>
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div>
+          <h2 id="page-title">Dashboard</h2>
+        </div>
       </div>
       <div class="header-right">
-        <div id="hijri-chip" class="hijri-chip">—</div>
-        <div id="date-chip" class="date-chip">—</div>
-        <button class="btn btn-outline btn-sm" onclick="loadAll()">↻ Refresh</button>
-        <button class="btn btn-ghost btn-sm" onclick="showChangeUrl()" title="Change API URL">⚙</button>
+        <div id="hijri-chip" class="hijri-chip"></div>
+        <div id="date-chip"  class="date-chip"></div>
+        <button class="btn btn-outline btn-sm" onclick="loadAll()">↻</button>
+        <button class="btn btn-ghost btn-sm"   onclick="showChangeUrl()" title="Settings">⚙</button>
+        <button class="btn btn-ghost btn-sm"   onclick="doLogout()" title="Logout">🔒</button>
       </div>
     </header>
 
-    <!-- CONTENT -->
     <div class="content-area">
-
-      <!-- ── DASHBOARD ──────────────────────────── -->
-      <section id="sec-dashboard" class="section active">
-        <div id="dashboard-content">
-          <div style="text-align:center;padding:40px;color:var(--text-muted)">Loading dashboard…</div>
-        </div>
-      </section>
-
-      <!-- ── GOLD ──────────────────────────────── -->
-      <section id="sec-gold" class="section">
+      <section id="sec-dashboard"  class="section active"></section>
+      <section id="sec-gold"       class="section">
         <div class="sec-header">
-          <div>
-            <h3>🏅 Gold Assets</h3>
-            <p>Track your gold jewellery, coins, and bars</p>
-          </div>
+          <div><h3>🏅 Gold Assets</h3><p>Track your gold jewellery, coins &amp; bars</p></div>
           <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Values</button>
-            <button class="btn btn-primary btn-sm" onclick="openAddModal('gold')">+ Add Gold Item</button>
+            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate</button>
+            <button class="btn btn-primary btn-sm" onclick="openAddModal('gold')">+ Add Gold</button>
           </div>
-        </div>
-        <div id="tbl-gold"></div>
+        </div><div id="tbl-gold"></div>
       </section>
-
-      <!-- ── SILVER ─────────────────────────────── -->
-      <section id="sec-silver" class="section">
+      <section id="sec-silver"     class="section">
         <div class="sec-header">
-          <div>
-            <h3>🥈 Silver Assets</h3>
-            <p>Track your silver jewellery, coins, and bars</p>
-          </div>
+          <div><h3>🥈 Silver Assets</h3><p>Track your silver jewellery &amp; coins</p></div>
           <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Values</button>
-            <button class="btn btn-primary btn-sm" onclick="openAddModal('silver')">+ Add Silver Item</button>
+            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate</button>
+            <button class="btn btn-primary btn-sm" onclick="openAddModal('silver')">+ Add Silver</button>
           </div>
-        </div>
-        <div id="tbl-silver"></div>
+        </div><div id="tbl-silver"></div>
       </section>
-
-      <!-- ── DEPOSITS ───────────────────────────── -->
-      <section id="sec-deposits" class="section">
+      <section id="sec-deposits"   class="section">
         <div class="sec-header">
-          <div>
-            <h3>🏦 Deposited Money</h3>
-            <p>Bank savings, cash, and other deposits</p>
-          </div>
+          <div><h3>🏦 Deposited Money</h3><p>Bank savings, cash &amp; other deposits</p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddModal('deposited')">+ Add Deposit</button>
-        </div>
-        <div id="tbl-deposits"></div>
+        </div><div id="tbl-deposits"></div>
       </section>
-
-      <!-- ── CAPITAL INVESTMENTS ────────────────── -->
-      <section id="sec-invCap" class="section">
+      <section id="sec-invCap"     class="section">
         <div class="sec-header">
-          <div>
-            <h3>📈 Capital Investments</h3>
-            <p>Profit reinvested into capital — <b>Zakatable</b></p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('invCap')">+ Add Investment</button>
-        </div>
-        <div id="tbl-invCap"></div>
+          <div><h3>📈 Capital Investments</h3><p>Profit reinvested → <b>Zakatable</b></p></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal('invCap')">+ Add</button>
+        </div><div id="tbl-invCap"></div>
       </section>
-
-      <!-- ── MONTHLY INVESTMENTS ────────────────── -->
-      <section id="sec-invMon" class="section">
+      <section id="sec-invMon"     class="section">
         <div class="sec-header">
-          <div>
-            <h3>💹 Monthly Income Investments</h3>
-            <p>Profit taken monthly — principal <b>not Zakatable</b> by default</p>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal('invMon')">+ Add Investment</button>
-        </div>
-        <div id="tbl-invMon"></div>
+          <div><h3>💹 Monthly Income Investments</h3><p>Principal <b>not Zakatable</b> by default</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal('invMon')">+ Add</button>
+        </div><div id="tbl-invMon"></div>
       </section>
-
-      <!-- ── LOAN RECEIVABLE ────────────────────── -->
-      <section id="sec-loanRec" class="section">
+      <section id="sec-loanRec"    class="section">
         <div class="sec-header">
-          <div>
-            <h3>📤 Loan Receivable</h3>
-            <p>Money you've given to others — <b>adds to Zakat wealth</b></p>
-          </div>
+          <div><h3>📤 Loans Receivable</h3><p>Money owed to you — <b>adds to wealth</b></p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddModal('loanRec')">+ Add Loan</button>
-        </div>
-        <div id="tbl-loanRec"></div>
+        </div><div id="tbl-loanRec"></div>
       </section>
-
-      <!-- ── LOAN PAYABLE ───────────────────────── -->
-      <section id="sec-loanPay" class="section">
+      <section id="sec-loanPay"    class="section">
         <div class="sec-header">
-          <div>
-            <h3>📥 Loan Payable</h3>
-            <p>Money you owe others — <b>deducted from Zakat wealth</b></p>
-          </div>
+          <div><h3>📥 Loans Payable</h3><p>Money you owe — <b>deducted from wealth</b></p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddModal('loanPay')">+ Add Loan</button>
-        </div>
-        <div id="tbl-loanPay"></div>
+        </div><div id="tbl-loanPay"></div>
       </section>
-
-      <!-- ── MARKET VALUES ──────────────────────── -->
-      <section id="sec-market" class="section">
-        <div class="sec-header">
-          <div>
-            <h3>📊 Market Values</h3>
-            <p>Current gold &amp; silver prices per gram (BDT)</p>
-          </div>
-          <div class="sec-actions">
-            <button class="btn btn-outline btn-sm" onclick="fetchMarket()">🌐 Fetch from Bajus.org</button>
-            <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Assets</button>
-          </div>
-        </div>
-        <div id="market-content"></div>
-      </section>
-
-      <!-- ── TIMEFRAMES ─────────────────────────── -->
+      <section id="sec-market"     class="section"></section>
       <section id="sec-timeframes" class="section">
         <div class="sec-header">
-          <div>
-            <h3>📅 Zakat Timeframes</h3>
-            <p>Track yearly Zakat periods and obligations</p>
-          </div>
+          <div><h3>📅 Zakat Timeframes</h3><p>Track yearly Zakat periods</p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddTFModal()">+ New Timeframe</button>
-        </div>
-        <div id="tf-content"></div>
+        </div><div id="tf-content"></div>
       </section>
-
-      <!-- ── PAYMENTS ───────────────────────────── -->
-      <section id="sec-payments" class="section">
+      <section id="sec-payments"   class="section">
         <div class="sec-header">
-          <div>
-            <h3>💸 Zakat Payments</h3>
-            <p>Record all Zakat payments made</p>
-          </div>
+          <div><h3>💸 Zakat Payments</h3><p>Record &amp; track payments made</p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddPaymentModal()">+ Record Payment</button>
-        </div>
-        <div id="pay-content"></div>
+        </div><div id="pay-content"></div>
       </section>
-
-      <!-- ── SETTINGS ───────────────────────────── -->
-      <section id="sec-settings" class="section">
-        <div class="sec-header">
-          <h3>⚙️ Calculation Settings</h3>
-        </div>
+      <section id="sec-settings"   class="section">
+        <div class="sec-header"><h3>⚙️ Settings</h3></div>
         <div id="settings-content"></div>
       </section>
+    </div>
+  </div>
+</div>
 
-    </div><!-- /content-area -->
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<!-- ══════════════════════════════════════════
-     MODAL
-══════════════════════════════════════════ -->
+<!-- MODAL -->
 <div id="modal-overlay" class="modal-overlay hidden">
   <div class="modal" id="modal-box">
     <div class="modal-header">
@@ -1122,1524 +557,1020 @@ tfoot td {
     </div>
   </div>
 </div>
-
-<!-- TOAST -->
 <div id="toast-wrap"></div>
+<div id="loader" class="hidden"><div class="spinner"></div><div class="loader-msg" id="loader-msg">Loading…</div></div>
 
-<!-- LOADER -->
-<div id="loader" class="hidden">
-  <div class="spinner"></div>
-  <div class="loader-msg" id="loader-msg">Loading…</div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════ -->
 <script>
 'use strict';
-
-// ══════════════════════════════════════════════
-// STATE & SCHEMAS
-// ══════════════════════════════════════════════
-
-let GAS_URL  = '';
-let appData  = {};
-let modalCfg = null;   // { mode:'add'|'edit', schema, rowData }
-let currentSection = 'dashboard';
+// ══════ STATE ═════════════════════════════════════════════════
+let GAS_URL    = '';
+let AUTH_TOKEN = '';
+let appData    = {};
+let modalCfg   = null;
 
 const SCHEMAS = {
-  gold: {
-    title    : 'Gold Item',
-    sheet    : 'Gold',
-    dataKey  : 'gold',
-    totalCol : 'Selling Value (Tk)',
-    tableCols: ['Ser','Gold Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
-    colTypes : { 'Value (Tk)':'num', 'Selling Value (Tk)':'num', 'Weight (Gram)':'num' },
-    fields   : [
-      { k:'Gold Items',         l:'Item Name',          t:'text',   req:true,  ph:'e.g. Necklace, Ring, Coin' },
-      { k:'KARAT',              l:'Karat',              t:'select', req:true,  opts:['22','21','18','Traditional'], onInput:'autoCalcMetal("gold")' },
-      { k:'Weight (Gram)',      l:'Weight (Gram)',       t:'number', req:true,  step:'0.001', ph:'0.000', onInput:'autoCalcMetal("gold")' },
-      { k:'Value (Tk)',         l:'Market Value (৳)',   t:'number', step:'0.01', ph:'Auto-filled from market price', cls:'auto-fill' },
-      { k:'Selling Value (Tk)', l:'Selling/Zakat Value (৳)', t:'number', step:'0.01', ph:'Auto-filled (Market × Selling%)', cls:'auto-fill' },
-    ]
-  },
-  silver: {
-    title    : 'Silver Item',
-    sheet    : 'Silver',
-    dataKey  : 'silver',
-    totalCol : 'Selling Value (Tk)',
-    tableCols: ['Ser','Silver Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
-    colTypes : { 'Value (Tk)':'num', 'Selling Value (Tk)':'num', 'Weight (Gram)':'num' },
-    fields   : [
-      { k:'Silver Items',       l:'Item Name',          t:'text',   req:true,  ph:'e.g. Bracelet, Coin, Bar' },
-      { k:'KARAT',              l:'Karat',              t:'select', req:true,  opts:['22','21','18','Traditional'], onInput:'autoCalcMetal("silver")' },
-      { k:'Weight (Gram)',      l:'Weight (Gram)',       t:'number', req:true,  step:'0.001', ph:'0.000', onInput:'autoCalcMetal("silver")' },
-      { k:'Value (Tk)',         l:'Market Value (৳)',   t:'number', step:'0.01', ph:'Auto-filled from market price', cls:'auto-fill' },
-      { k:'Selling Value (Tk)', l:'Selling/Zakat Value (৳)', t:'number', step:'0.01', ph:'Auto-filled (Market × Selling%)', cls:'auto-fill' },
-    ]
-  },
-  deposited: {
-    title    : 'Deposit Entry',
-    sheet    : 'Deposited_Money',
-    dataKey  : 'deposited',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Deposition Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Deposition Scope', l:'Scope / Source', t:'text',   req:true, ph:'e.g. BRAC Bank Savings A/C, Cash at Home' },
-      { k:'Amount',           l:'Amount (৳)',     t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  invCap: {
-    title    : 'Capital Investment',
-    sheet    : 'Invested_Capital',
-    dataKey  : 'invCap',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Investment Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Investment Scope', l:'Investment / Company', t:'text',   req:true, ph:'e.g. Shares – BEXIMCO, FDR – Dutch Bangla' },
-      { k:'Amount',           l:'Invested Amount (৳)',  t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  invMon: {
-    title    : 'Monthly Income Investment',
-    sheet    : 'Invested_Monthly',
-    dataKey  : 'invMon',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Investment Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Investment Scope', l:'Investment / Company',  t:'text',   req:true, ph:'e.g. DPS – Islami Bank, MIS – Savings' },
-      { k:'Amount',           l:'Principal Amount (৳)',  t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  loanRec: {
-    title    : 'Loan Receivable',
-    sheet    : 'Loan_Receivable',
-    dataKey  : 'loanRec',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Loan Given Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Loan Given Scope', l:'Given To / Purpose', t:'text',   req:true, ph:'e.g. Karim Bhai – personal' },
-      { k:'Amount',           l:'Amount (৳)',          t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  },
-  loanPay: {
-    title    : 'Loan Payable',
-    sheet    : 'Loan_Payable',
-    dataKey  : 'loanPay',
-    totalCol : 'Amount',
-    tableCols: ['Ser','Loan Taken Scope','Amount'],
-    colTypes : { 'Amount':'num' },
-    fields   : [
-      { k:'Loan Taken Scope', l:'Taken From / Purpose', t:'text',   req:true, ph:'e.g. Rahim Bhai – house' },
-      { k:'Amount',           l:'Amount (৳)',            t:'number', req:true, step:'0.01', ph:'0.00' },
-    ]
-  }
+  gold:{title:'Gold Item',sheet:'Gold',dataKey:'gold',totalCol:'Selling Value (Tk)',
+    tableCols:['Ser','Gold Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
+    colTypes:{'Value (Tk)':'num','Selling Value (Tk)':'num','Weight (Gram)':'num'},
+    fields:[
+      {k:'Gold Items',l:'Item Name',t:'text',req:true,ph:'e.g. Necklace, Ring, Coin'},
+      {k:'KARAT',l:'Karat',t:'select',req:true,opts:['22','21','18','Traditional'],onInput:'autoCalcMetal("gold")'},
+      {k:'Weight (Gram)',l:'Weight (Gram)',t:'number',req:true,step:'0.001',ph:'0.000',onInput:'autoCalcMetal("gold")'},
+      {k:'Value (Tk)',l:'Market Value (৳)',t:'number',step:'0.01',ph:'Auto-calculated',cls:'auto-fill'},
+      {k:'Selling Value (Tk)',l:'Selling / Zakat Value (৳)',t:'number',step:'0.01',ph:'Auto-calculated',cls:'auto-fill'},
+    ]},
+  silver:{title:'Silver Item',sheet:'Silver',dataKey:'silver',totalCol:'Selling Value (Tk)',
+    tableCols:['Ser','Silver Items','KARAT','Weight (Gram)','Value (Tk)','Selling Value (Tk)'],
+    colTypes:{'Value (Tk)':'num','Selling Value (Tk)':'num','Weight (Gram)':'num'},
+    fields:[
+      {k:'Silver Items',l:'Item Name',t:'text',req:true,ph:'e.g. Bracelet, Coin, Bar'},
+      {k:'KARAT',l:'Karat',t:'select',req:true,opts:['22','21','18','Traditional'],onInput:'autoCalcMetal("silver")'},
+      {k:'Weight (Gram)',l:'Weight (Gram)',t:'number',req:true,step:'0.001',ph:'0.000',onInput:'autoCalcMetal("silver")'},
+      {k:'Value (Tk)',l:'Market Value (৳)',t:'number',step:'0.01',ph:'Auto-calculated',cls:'auto-fill'},
+      {k:'Selling Value (Tk)',l:'Selling / Zakat Value (৳)',t:'number',step:'0.01',ph:'Auto-calculated',cls:'auto-fill'},
+    ]},
+  deposited:{title:'Deposit Entry',sheet:'Deposited_Money',dataKey:'deposited',totalCol:'Amount',
+    tableCols:['Ser','Deposition Scope','Amount'],colTypes:{'Amount':'num'},
+    fields:[
+      {k:'Deposition Scope',l:'Scope / Source',t:'text',req:true,ph:'e.g. BRAC Bank Savings, Cash at Home'},
+      {k:'Amount',l:'Amount (৳)',t:'number',req:true,step:'0.01',ph:'0.00'},
+    ]},
+  invCap:{title:'Capital Investment',sheet:'Invested_Capital',dataKey:'invCap',totalCol:'Amount',
+    tableCols:['Ser','Investment Scope','Amount'],colTypes:{'Amount':'num'},
+    fields:[
+      {k:'Investment Scope',l:'Investment / Company',t:'text',req:true,ph:'e.g. Shares – BEXIMCO, FDR'},
+      {k:'Amount',l:'Invested Amount (৳)',t:'number',req:true,step:'0.01',ph:'0.00'},
+    ]},
+  invMon:{title:'Monthly Investment',sheet:'Invested_Monthly',dataKey:'invMon',totalCol:'Amount',
+    tableCols:['Ser','Investment Scope','Amount'],colTypes:{'Amount':'num'},
+    fields:[
+      {k:'Investment Scope',l:'Investment / Company',t:'text',req:true,ph:'e.g. DPS – Islami Bank'},
+      {k:'Amount',l:'Principal Amount (৳)',t:'number',req:true,step:'0.01',ph:'0.00'},
+    ]},
+  loanRec:{title:'Loan Receivable',sheet:'Loan_Receivable',dataKey:'loanRec',totalCol:'Amount',
+    tableCols:['Ser','Loan Given Scope','Amount'],colTypes:{'Amount':'num'},
+    fields:[
+      {k:'Loan Given Scope',l:'Given To / Purpose',t:'text',req:true,ph:'e.g. Karim Bhai – personal'},
+      {k:'Amount',l:'Amount (৳)',t:'number',req:true,step:'0.01',ph:'0.00'},
+    ]},
+  loanPay:{title:'Loan Payable',sheet:'Loan_Payable',dataKey:'loanPay',totalCol:'Amount',
+    tableCols:['Ser','Loan Taken Scope','Amount'],colTypes:{'Amount':'num'},
+    fields:[
+      {k:'Loan Taken Scope',l:'Taken From / Purpose',t:'text',req:true,ph:'e.g. Rahim Bhai – house'},
+      {k:'Amount',l:'Amount (৳)',t:'number',req:true,step:'0.01',ph:'0.00'},
+    ]},
 };
 
-// ══════════════════════════════════════════════
-// API
-// ══════════════════════════════════════════════
-
-async function apiFetch(action, queryParams = {}, postData = null) {
+// ══════ API ═══════════════════════════════════════════════════
+async function apiFetch(action, qp={}, postData=null) {
   const url = new URL(GAS_URL);
   url.searchParams.set('action', action);
-  Object.entries(queryParams).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, v);
-  });
-  const opts = { redirect: 'follow' };
+  if (AUTH_TOKEN) url.searchParams.set('token', AUTH_TOKEN);
+  Object.entries(qp).forEach(([k,v]) => { if (v!=null) url.searchParams.set(k,v); });
+  const opts = { redirect:'follow' };
   if (postData !== null) {
     opts.method  = 'POST';
-    opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    opts.body    = new URLSearchParams({ data: JSON.stringify(postData) });
+    opts.headers = {'Content-Type':'application/x-www-form-urlencoded'};
+    const body   = new URLSearchParams({ data: JSON.stringify(postData) });
+    if (AUTH_TOKEN) body.set('token', AUTH_TOKEN);
+    Object.entries(qp).forEach(([k,v]) => { if (v!=null) body.set(k,v); });
+    opts.body = body;
   }
   const r = await fetch(url.toString(), opts);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  const json = await r.json();
+  if (json.code === 401 || json.error === 'Unauthorized') {
+    AUTH_TOKEN = '';
+    localStorage.removeItem('zakat_auth_token');
+    showLoginOverlay();
+    throw new Error('Session expired. Please login again.');
+  }
+  return json;
 }
-
 const API = {
-  get : (a, p)     => apiFetch(a, p),
-  post: (a, d, p)  => apiFetch(a, p || {}, d),
+  get :(a,p)   => apiFetch(a, p||{}),
+  post:(a,d,p) => apiFetch(a, p||{}, d||{}),
 };
 
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
-
+// ══════ INIT & AUTH ═══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-  GAS_URL = localStorage.getItem('zakat_gas_url') || '';
+  GAS_URL    = localStorage.getItem('zakat_gas_url')    || '';
+  AUTH_TOKEN = localStorage.getItem('zakat_auth_token') || '';
   updateDateChips();
   setInterval(updateDateChips, 60000);
-
-  if (!GAS_URL) { showSetup(); return; }
-
-  showApp();
-  await loadAll();
+  if (!GAS_URL)   { showSetupOverlay(); return; }
+  await checkAuthAndLoad();
 }
 
-function showSetup() {
+async function checkAuthAndLoad() {
+  try {
+    const r = await apiFetch('checkAuth');
+    if (!r.hasPassword) {
+      // No password set – auto-login
+      const lr = await apiFetch('login', {}, { password:'' });
+      if (lr.authenticated) {
+        AUTH_TOKEN = lr.token;
+        localStorage.setItem('zakat_auth_token', AUTH_TOKEN);
+      }
+      showApp(); await loadAll();
+    } else if (!AUTH_TOKEN) {
+      showLoginOverlay();
+    } else {
+      // Have token – try loading; 401 will redirect to login
+      showApp();
+      await loadAll();
+    }
+  } catch (e) {
+    showLoginOverlay();
+  }
+}
+
+function showSetupOverlay() {
   document.getElementById('setup-overlay').classList.remove('hidden');
+  document.getElementById('login-overlay').classList.add('hidden');
   document.getElementById('app').classList.add('hidden');
 }
-
+function showLoginOverlay() {
+  hideLoader();
+  document.getElementById('login-overlay').classList.remove('hidden');
+  document.getElementById('setup-overlay').classList.add('hidden');
+  document.getElementById('app').classList.add('hidden');
+  setTimeout(()=>document.getElementById('login-pwd')?.focus(),300);
+}
 function showApp() {
+  document.getElementById('login-overlay').classList.add('hidden');
   document.getElementById('setup-overlay').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
 }
 
-async function connectGAS() {
-  const url = document.getElementById('gas-url-input').value.trim();
-  const errEl = document.getElementById('setup-error');
+async function doLogin() {
+  const pwd  = document.getElementById('login-pwd').value;
+  const errEl= document.getElementById('login-err');
   errEl.textContent = '';
-
-  if (!url.includes('script.google.com')) {
-    errEl.textContent = '⚠ Please enter a valid Google Apps Script URL';
-    return;
-  }
-
-  showLoader('Connecting & initializing sheets…');
+  showLoader('Verifying…');
   try {
-    GAS_URL = url;
-    const r = await API.get('setup');
-    if (r.error) throw new Error(r.error);
-
-    localStorage.setItem('zakat_gas_url', url);
-    toast(`✓ Connected! Sheets ready: ${(r.sheetsCreated||[]).join(', ') || 'already existed'}`, 'success');
+    const r = await apiFetch('login', {}, { password: pwd });
+    if (!r.authenticated) throw new Error(r.error || 'Incorrect password');
+    AUTH_TOKEN = r.token;
+    localStorage.setItem('zakat_auth_token', AUTH_TOKEN);
+    document.getElementById('login-pwd').value = '';
+    toast('✓ Logged in successfully', 'success');
     showApp();
     await loadAll();
-  } catch (e) {
-    GAS_URL = '';
+  } catch(e) {
     errEl.textContent = '✗ ' + e.message;
-  } finally {
-    hideLoader();
-  }
+  } finally { hideLoader(); }
+}
+
+async function doLogout() {
+  try { await API.post('logout', {}); } catch(_) {}
+  AUTH_TOKEN = '';
+  localStorage.removeItem('zakat_auth_token');
+  showLoginOverlay();
+  toast('Logged out', 'info');
+}
+
+async function connectGAS() {
+  const url   = document.getElementById('gas-url-input').value.trim();
+  const errEl = document.getElementById('setup-error');
+  errEl.textContent = '';
+  if (!url.includes('script.google.com')) { errEl.textContent='⚠ Invalid URL'; return; }
+  showLoader('Connecting…');
+  try {
+    GAS_URL = url;
+    const r = await apiFetch('setup');
+    if (r.error) throw new Error(r.error);
+    localStorage.setItem('zakat_gas_url', url);
+    toast('✓ Connected! Sheets initialized', 'success');
+    await checkAuthAndLoad();
+  } catch(e) { GAS_URL=''; errEl.textContent='✗ '+e.message; }
+  finally { hideLoader(); }
 }
 
 function showChangeUrl() {
-  openModal({
-    title : '🔗 Change API URL',
-    wide  : false,
-    body  : `<div class="form-group">
-               <label class="form-label">Google Apps Script URL</label>
-               <input id="change-url-input" class="form-control" type="url"
-                 value="${GAS_URL}" placeholder="https://script.google.com/macros/s/.../exec">
-             </div>`,
-    save  : async () => {
-      const newUrl = document.getElementById('change-url-input').value.trim();
-      if (!newUrl) return;
-      GAS_URL = newUrl;
-      localStorage.setItem('zakat_gas_url', newUrl);
-      closeModal();
-      toast('API URL updated', 'success');
-      await loadAll();
-    },
-    saveLabel: 'Update'
+  openModal({ title:'⚙ Connection & Settings',
+    body:`<div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Google Apps Script URL</label>
+      <input id="c-url" class="form-control" type="url" value="${escHtml(GAS_URL)}"
+        placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <div style="border-top:1px solid var(--blt);padding-top:14px">
+      <div class="form-label" style="margin-bottom:10px">🔐 Change Password</div>
+      <div class="form-grid" style="gap:10px">
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input id="c-cur" class="form-control" type="password" placeholder="Leave blank if none">
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password (blank=remove)</label>
+          <input id="c-new" class="form-control" type="password" placeholder="New password">
+        </div>
+      </div>
+      <div class="form-hint" style="margin-top:6px">Leave New Password blank to remove password protection</div>
+    </div>`,
+    save: async () => {
+      const newUrl = document.getElementById('c-url').value.trim();
+      const curPwd = document.getElementById('c-cur').value;
+      const newPwd = document.getElementById('c-new').value;
+      if (newUrl) { GAS_URL = newUrl; localStorage.setItem('zakat_gas_url', newUrl); }
+      if (curPwd !== '' || newPwd !== '') {
+        showLoader('Updating password…');
+        try {
+          const r = await API.post('setPassword', { currentPassword:curPwd, newPassword:newPwd });
+          if (!r.success) throw new Error(r.error);
+          AUTH_TOKEN = ''; localStorage.removeItem('zakat_auth_token');
+          toast('Password updated. Please login again.','success');
+          closeModal(); hideLoader(); showLoginOverlay(); return;
+        } catch(e) { toast('Password error: '+e.message,'error'); hideLoader(); return; }
+      }
+      toast('Settings updated','success'); closeModal();
+      if (newUrl) await loadAll();
+    }, saveLabel:'Save Changes'
   });
 }
 
-// ══════════════════════════════════════════════
-// DATA LOADING
-// ══════════════════════════════════════════════
+// ══════ SIDEBAR (MOBILE) ══════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('active');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('active');
+}
 
+// ══════ DATA LOADING ══════════════════════════════════════════
 async function loadAll() {
   showLoader('Loading Zakat data…');
   try {
     const r = await API.get('getAllData');
     if (r.error) throw new Error(r.error);
-    appData = r;
-    renderAll();
-    toast('Data refreshed', 'success');
-  } catch (e) {
-    toast('Failed to load data: ' + e.message, 'error');
-  } finally {
-    hideLoader();
-  }
+    appData = r; renderAll(); toast('Data refreshed','success');
+  } catch(e) { toast('Load error: '+e.message,'error'); }
+  finally { hideLoader(); }
 }
 
 function renderAll() {
   renderDashboard();
-  renderSection('gold');
-  renderSection('silver');
-  renderSection('deposited');
-  renderSection('invCap');
-  renderSection('invMon');
-  renderSection('loanRec');
-  renderSection('loanPay');
-  renderMarket();
-  renderTimeframes();
-  renderPayments();
-  renderSettings();
+  ['gold','silver','deposited','invCap','invMon','loanRec','loanPay'].forEach(renderSection);
+  renderMarket(); renderTimeframes(); renderPayments(); renderSettings();
 }
 
-// ══════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════
-
-const PAGE_META = {
-  dashboard : { title:'Dashboard',              sub:'Overview of your Zakat status' },
-  gold       : { title:'Gold Assets',           sub:'Gold jewellery, coins & bars' },
-  silver     : { title:'Silver Assets',         sub:'Silver jewellery, coins & bars' },
-  deposits   : { title:'Deposited Money',       sub:'Bank savings, cash & other deposits' },
-  invCap     : { title:'Capital Investments',   sub:'Profit reinvested into capital — Zakatable' },
-  invMon     : { title:'Monthly Investments',   sub:'Monthly profit investments — principal not Zakatable by default' },
-  loanRec    : { title:'Loans Receivable',      sub:'Money owed to you — adds to Zakat wealth' },
-  loanPay    : { title:'Loans Payable',         sub:'Money you owe — deducted from Zakat wealth' },
-  market     : { title:'Market Values',         sub:'Current gold & silver prices per gram (৳)' },
-  timeframes : { title:'Zakat Timeframes',      sub:'Track yearly Zakat periods and obligations' },
-  payments   : { title:'Zakat Payments',        sub:'Record payments made' },
-  settings   : { title:'Settings',             sub:'Configure Zakat calculation rules' },
+// ══════ NAVIGATION ════════════════════════════════════════════
+const PAGE_TITLES = {
+  dashboard:'Dashboard', gold:'Gold Assets', silver:'Silver Assets',
+  deposits:'Deposits', invCap:'Capital Investments', invMon:'Monthly Investments',
+  loanRec:'Loans Receivable', loanPay:'Loans Payable', market:'Market Values',
+  timeframes:'Timeframes', payments:'Payments', settings:'Settings'
 };
 
-function navigate(sec) {
-  currentSection = sec;
-
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById('sec-' + sec) || document.getElementById('sec-' + sec.toLowerCase());
-  if (target) target.classList.add('active');
-
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.sec === sec);
-  });
-
-  const meta = PAGE_META[sec] || { title: sec, sub: '' };
-  document.getElementById('page-title').textContent = meta.title;
-  document.getElementById('page-breadcrumb').textContent = meta.sub;
+function nav(sec) {
+  closeSidebar();
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('sec-'+sec);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.sec===sec));
+  document.getElementById('page-title').textContent = PAGE_TITLES[sec]||sec;
 }
 
-// ══════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════
-
+// ══════ DASHBOARD ════════════════════════════════════════════
 function renderDashboard() {
-  const calc = appData.calc || {};
-  const s    = appData.settings || {};
-  const tfs  = appData.timeframes || [];
-  const pays = appData.payments || [];
-  const mkt  = appData.market || [];
+  const calc=appData.calc||{}, s=appData.settings||{}, tfs=appData.timeframes||[], pays=appData.payments||[];
+  const activeTF=tfs.find(t=>t['Status']==='Active');
+  const totalPaid=pays.reduce((a,p)=>a+(+(p['Amount (Tk)']||0)),0);
+  const lifetimeDue=tfs.reduce((a,t)=>a+(+(t['Zakat Due (Tk)']||0)),0);
+  const remaining=Math.max(0,(calc.due||0)-totalPaid);
+  const nisabPct=calc.nisab?.value?Math.min(200,(calc.total/calc.nisab.value)*100):0;
+  const bd=calc.breakdown||{};
+  const mktOk=(appData.market||[]).some(m=>+(m['Price Per Gram (Tk)']||0)>0);
+  const recentPays=[...pays].reverse().slice(0,5);
+  const tfLabel=activeTF?`${fdate(activeTF['Start Date'])} → ${fdate(activeTF['End Date'])}`:'No active timeframe';
 
-  const activeTF     = tfs.find(t => t['Status'] === 'Active');
-  const totalPaid    = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-  const lifetimeDue  = tfs.reduce((a, t) => a + (+(t['Zakat Due (Tk)']||0)), 0);
-  const remaining    = Math.max(0, (calc.due||0) - totalPaid);
-  const nisabPct     = calc.nisab?.value ? Math.min(200, (calc.total / calc.nisab.value) * 100) : 0;
-  const nisabMet     = calc.nisabMet;
-
-  const recentPays   = [...pays].reverse().slice(0, 5);
-
-  const bd = calc.breakdown || {};
-  const tfLabel = activeTF
-    ? `${fdate(activeTF['Start Date'])} → ${fdate(activeTF['End Date'])}`
-    : 'No active timeframe set';
-  const tfDays  = activeTF ? activeTF['Days'] : (s.lunar_days || 354);
-  const tfRate  = activeTF ? activeTF['Rate (%)'] : calc.rate;
-
-  document.getElementById('dashboard-content').innerHTML = `
-    <!-- NISAB ALERT -->
-    ${!mkt.some(m => +(m['Price Per Gram (Tk)']||0) > 0) ? `
-    <div class="card mb-16" style="border-left:4px solid var(--warning);background:var(--warning-light)">
-      <div class="card-body" style="padding:14px 18px">
-        ⚠️ <b>Market prices not set.</b> Please update Gold & Silver prices in
-        <a href="#" onclick="navigate('market')" style="color:var(--primary)">Market Values</a>
-        for accurate Zakat calculation.
-      </div>
-    </div>` : ''}
-
-    <!-- STAT CARDS -->
+  document.getElementById('sec-dashboard').innerHTML=`
+    ${!mktOk?`<div class="info-box info-gold mb-16">⚠️ <b>Market prices not set.</b>
+      Go to <a href="#" onclick="nav('market')" style="color:var(--primary)">Market Values</a>
+      to enter current gold &amp; silver prices.</div>`:''}
     <div class="stat-cards mb-20">
-      <div class="stat-card sc-total">
-        <div class="sc-icon">💰</div>
+      <div class="stat-card sc-total"><div class="sc-icon">💰</div>
         <div class="sc-label">Total Zakatable Wealth</div>
         <div class="sc-value">${tk(calc.total)}</div>
-        <div class="sc-sub">After deducting payable loans</div>
-      </div>
-      <div class="stat-card sc-nisab">
-        <div class="sc-icon">${nisabMet ? '✅' : '⏳'}</div>
+        <div class="sc-sub">Net after loan deductions</div></div>
+      <div class="stat-card sc-nisab"><div class="sc-icon">${calc.nisabMet?'✅':'⏳'}</div>
         <div class="sc-label">Nisab Status</div>
-        <div class="sc-value" style="font-size:17px;color:${nisabMet?'var(--success)':'var(--danger)'}">
-          ${nisabMet ? 'NISAB MET' : 'BELOW NISAB'}
-        </div>
-        <div class="sc-sub">${tk(calc.nisab?.value||0)} threshold</div>
-      </div>
-      <div class="stat-card sc-due">
-        <div class="sc-icon">📋</div>
+        <div class="sc-value" style="font-size:16px;color:${calc.nisabMet?'var(--primary)':'var(--danger)'}">
+          ${calc.nisabMet?'NISAB MET':'BELOW NISAB'}</div>
+        <div class="sc-sub">${tk(calc.nisab?.value)} threshold</div></div>
+      <div class="stat-card sc-due"><div class="sc-icon">📋</div>
         <div class="sc-label">Zakat Due</div>
         <div class="sc-value">${tk(calc.due)}</div>
-        <div class="sc-sub">${pct(calc.rate)} × Total Wealth</div>
-      </div>
-      <div class="stat-card sc-paid">
-        <div class="sc-icon">${remaining > 0 ? '⏰' : '✅'}</div>
+        <div class="sc-sub">${pct(calc.rate)} × wealth</div></div>
+      <div class="stat-card sc-paid"><div class="sc-icon">${remaining>0?'⏰':'✅'}</div>
         <div class="sc-label">Remaining to Pay</div>
-        <div class="sc-value" style="color:${remaining>0?'var(--danger)':'var(--success)'}">
-          ${tk(remaining)}
-        </div>
-        <div class="sc-sub">${tk(totalPaid)} already paid</div>
-      </div>
+        <div class="sc-value" style="color:${remaining>0?'var(--danger)':'var(--primary)'}">
+          ${tk(remaining)}</div>
+        <div class="sc-sub">${tk(totalPaid)} paid</div></div>
     </div>
-
-    <!-- WEALTH BREAKDOWN -->
     <div class="breakdown-grid mb-20">
-      <div class="bd-card bd-gold">
-        <div class="bd-icon">🏅</div>
-        <div class="bd-label">Gold</div>
-        <div class="bd-val" style="color:var(--gold)">${tk(bd.gold)}</div>
-      </div>
-      <div class="bd-card bd-silver">
-        <div class="bd-icon">🥈</div>
-        <div class="bd-label">Silver</div>
-        <div class="bd-val" style="color:#607D8B">${tk(bd.silver)}</div>
-      </div>
-      <div class="bd-card bd-dep">
-        <div class="bd-icon">🏦</div>
-        <div class="bd-label">Deposits</div>
-        <div class="bd-val" style="color:#1565C0">${tk(bd.dep)}</div>
-      </div>
-      <div class="bd-card bd-icap">
-        <div class="bd-icon">📈</div>
-        <div class="bd-label">Capital Inv.</div>
-        <div class="bd-val" style="color:var(--success)">${tk(bd.icap)}</div>
-      </div>
-      <div class="bd-card bd-imon">
-        <div class="bd-icon">💹</div>
-        <div class="bd-label">Monthly Inv.</div>
-        <div class="bd-val" style="color:#E65100">${tk(bd.imon)}</div>
-      </div>
-      <div class="bd-card bd-lrec">
-        <div class="bd-icon">📤</div>
-        <div class="bd-label">Loan Rec.</div>
-        <div class="bd-val" style="color:#7B1FA2">${tk(bd.lrec)}</div>
-      </div>
-      <div class="bd-card bd-lpay">
-        <div class="bd-icon">📥</div>
-        <div class="bd-label">Loan Pay.</div>
-        <div class="bd-val" style="color:var(--danger)">-${tk(bd.lpay)}</div>
-      </div>
+      <div class="bd-card bd-gold"><div class="bd-icon">🏅</div><div class="bd-label">Gold</div><div class="bd-val" style="color:var(--gold)">${tk(bd.gold)}</div></div>
+      <div class="bd-card bd-silver"><div class="bd-icon">🥈</div><div class="bd-label">Silver</div><div class="bd-val" style="color:#607D8B">${tk(bd.silver)}</div></div>
+      <div class="bd-card bd-dep"><div class="bd-icon">🏦</div><div class="bd-label">Deposits</div><div class="bd-val" style="color:var(--info)">${tk(bd.dep)}</div></div>
+      <div class="bd-card bd-icap"><div class="bd-icon">📈</div><div class="bd-label">Cap.Inv.</div><div class="bd-val" style="color:var(--primary)">${tk(bd.icap)}</div></div>
+      <div class="bd-card bd-imon"><div class="bd-icon">💹</div><div class="bd-label">Mon.Inv.</div><div class="bd-val" style="color:var(--warning)">${tk(bd.imon)}</div></div>
+      <div class="bd-card bd-lrec"><div class="bd-icon">📤</div><div class="bd-label">Ln.Rec.</div><div class="bd-val" style="color:#7B1FA2">${tk(bd.lrec)}</div></div>
+      <div class="bd-card bd-lpay"><div class="bd-icon">📥</div><div class="bd-label">Ln.Pay.</div><div class="bd-val" style="color:var(--danger)">-${tk(bd.lpay)}</div></div>
     </div>
-
-    <!-- NISAB PROGRESS + TIMEFRAME -->
     <div class="grid-2 mb-20">
-
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Nisab Threshold</div>
-            <div class="card-subtitle">${escHtml(calc.nisab?.label || '—')}</div>
-          </div>
-          <span class="badge ${nisabMet ? 'badge-yes' : 'badge-no'}">${nisabMet ? 'MET ✓' : 'NOT MET'}</span>
-        </div>
+        <div class="card-header"><div><div class="card-title">Nisab Threshold</div>
+          <div class="card-subtitle">${escHtml(calc.nisab?.label||'—')}</div></div>
+          <span class="badge badge-${calc.nisabMet?'yes':'no'}">${calc.nisabMet?'Met ✓':'Not Met'}</span></div>
         <div class="card-body">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-            <span>Your Wealth: <b>${tk(calc.total)}</b></span>
-            <span>Nisab: <b>${tk(calc.nisab?.value||0)}</b></span>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+            <span>Your: <b>${tk(calc.total)}</b></span><span>Nisab: <b>${tk(calc.nisab?.value)}</b></span>
           </div>
-          <div class="nisab-bar-wrap">
-            <div class="nisab-bar ${nisabPct>=100?'over':''}" style="width:${Math.min(100,nisabPct).toFixed(1)}%"></div>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
-            ${nisabPct.toFixed(1)}% of Nisab threshold
-            (${s.nisab_type||'silver'} ${s.nisab_karat||'22'}K)
-          </div>
+          <div class="bar-wrap"><div class="bar ${nisabPct>=100?'over':''}" style="width:${Math.min(100,nisabPct).toFixed(1)}%"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${nisabPct.toFixed(1)}% of Nisab (${s.nisab_type||'silver'} ${s.nisab_karat||'22'}K)</div>
         </div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">📅 Active Timeframe</div>
-            <div class="card-subtitle">${activeTF ? escHtml(activeTF['Label']||'') : 'Not set'}</div>
-          </div>
-          ${activeTF ? `<span class="badge badge-active">Active</span>` : `<button class="btn btn-sm btn-primary" onclick="navigate('timeframes')">Set Timeframe</button>`}
+        <div class="card-header"><div><div class="card-title">📅 Active Timeframe</div>
+          <div class="card-subtitle">${activeTF?escHtml(activeTF['Label']||''):'Not set'}</div></div>
+          ${activeTF?`<span class="badge badge-active">Active</span>`:`<button class="btn btn-sm btn-primary" onclick="nav('timeframes')">Set</button>`}
         </div>
         <div class="card-body">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Period</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px">${tfLabel}</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Duration</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px">${tfDays} days</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Zakat Rate</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px;color:var(--primary)">${pct(tfRate)}</div>
-            </div>
-            <div>
-              <div style="font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600">Zakat Due</div>
-              <div style="font-size:13px;font-weight:600;margin-top:3px;color:var(--danger)">${tk(calc.due)}</div>
-            </div>
+            <div><div style="font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600">Period</div>
+              <div style="font-size:12px;font-weight:600;margin-top:3px">${tfLabel}</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600">Rate</div>
+              <div style="font-size:14px;font-weight:700;color:var(--primary);margin-top:3px">${pct(calc.rate)}</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600">Duration</div>
+              <div style="font-size:12px;font-weight:600;margin-top:3px">${calc.days||354} days</div></div>
+            <div><div style="font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600">Zakat Due</div>
+              <div style="font-size:14px;font-weight:700;color:var(--danger);margin-top:3px">${tk(calc.due)}</div></div>
           </div>
         </div>
       </div>
-
     </div>
-
-    <!-- LIFETIME STATS + RECENT PAYMENTS -->
     <div class="grid-2">
-
       <div class="card">
         <div class="card-header"><div class="card-title">📊 Lifetime Summary</div></div>
         <div class="card-body">
-          <div class="history-grid">
-            <div class="hist-card">
-              <div class="hc-label">Total Periods</div>
-              <div class="hc-val hc-green">${tfs.length}</div>
-              <div class="hc-sub">Timeframes recorded</div>
-            </div>
-            <div class="hist-card">
-              <div class="hc-label">Total Due (Lifetime)</div>
-              <div class="hc-val hc-red">${tk(lifetimeDue)}</div>
-              <div class="hc-sub">Across all periods</div>
-            </div>
-            <div class="hist-card">
-              <div class="hc-label">Total Paid</div>
-              <div class="hc-val hc-gold">${tk(totalPaid)}</div>
-              <div class="hc-sub">${pays.length} payment(s)</div>
-            </div>
+          <div class="hist-grid">
+            <div class="hist-card"><div class="hc-label">Periods</div><div class="hc-val hc-g">${tfs.length}</div><div class="hc-sub">Timeframes</div></div>
+            <div class="hist-card"><div class="hc-label">Total Due</div><div class="hc-val hc-r">${tk(lifetimeDue)}</div><div class="hc-sub">All periods</div></div>
+            <div class="hist-card"><div class="hc-label">Total Paid</div><div class="hc-val hc-o">${tk(totalPaid)}</div><div class="hc-sub">${pays.length} payment(s)</div></div>
           </div>
-          <button class="btn btn-outline btn-sm" onclick="navigate('payments')" style="width:100%;margin-top:6px">
-            View All Payments →
-          </button>
+          <button class="btn btn-outline btn-sm" onclick="nav('payments')" style="width:100%;margin-top:8px">View All Payments →</button>
         </div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">🕐 Recent Payments</div>
-          <button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()">+ Add</button>
-        </div>
+        <div class="card-header"><div class="card-title">🕐 Recent Payments</div>
+          <button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()">+ Add</button></div>
         <div class="card-body" style="padding:0">
-          ${recentPays.length ? `
-          <table class="rpay-table">
-            <thead><tr>
-              <th>Date</th><th>Timeframe</th><th style="text-align:right">Amount (৳)</th>
-            </tr></thead>
-            <tbody>
-              ${recentPays.map(p => `<tr>
-                <td>${fdate(p['Date'])}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${escHtml(String(p['Timeframe']||'—'))}</td>
-                <td style="text-align:right;font-weight:700;color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>` : `<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px">
-            No payments recorded yet<br>
-            <button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()" style="margin-top:10px">Record First Payment</button>
-          </div>`}
+          ${recentPays.length?`<table class="rpay-table"><thead><tr><th>Date</th><th>Timeframe</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${recentPays.map(p=>`<tr>
+            <td>${fdate(p['Date'])}</td>
+            <td style="font-size:11px;color:var(--muted)">${escHtml(String(p['Timeframe']||'—'))}</td>
+            <td style="text-align:right;font-weight:700;color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
+          </tr>`).join('')}</tbody></table>`:
+          `<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">
+            No payments yet<br><button class="btn btn-sm btn-primary" onclick="openAddPaymentModal()" style="margin-top:10px">Record First Payment</button></div>`}
         </div>
       </div>
-
-    </div>
-  `;
+    </div>`;
 }
 
-// ══════════════════════════════════════════════
-// GENERIC WEALTH TABLE RENDER
-// ══════════════════════════════════════════════
+// ══════ WEALTH TABLES ════════════════════════════════════════
+function renderSection(key) {
+  const sc = SCHEMAS[key]; if (!sc) return;
+  const idMap={gold:'gold',silver:'silver',deposited:'deposits',invCap:'invCap',invMon:'invMon',loanRec:'loanRec',loanPay:'loanPay'};
+  const el = document.getElementById('tbl-'+idMap[key]); if (!el) return;
+  const data = appData[sc.dataKey]||[], ct = sc.colTypes||{};
+  const total = data.reduce((a,r)=>a+(+(r[sc.totalCol]||0)),0);
+  const neg   = key==='loanPay';
 
-function renderSection(schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  if (!schema) return;
-
-  const sectionId = {
-    gold:'gold', silver:'silver', deposited:'deposits',
-    invCap:'invCap', invMon:'invMon', loanRec:'loanRec', loanPay:'loanPay'
-  }[schemaKey];
-
-  const container = document.getElementById('tbl-' + sectionId);
-  if (!container) return;
-
-  const data = appData[schema.dataKey] || [];
-  const cols = schema.tableCols;
-  const isNegative = (schemaKey === 'loanPay');
-
-  const total = data.reduce((a, r) => a + (+(r[schema.totalCol]||0)), 0);
-  const colTypes = schema.colTypes || {};
-
-  let tbody = '';
+  let tbody='';
   if (!data.length) {
-    tbody = `<tr class="empty-row"><td colspan="${cols.length + 1}">
-      <span class="empty-icon">📭</span>No entries yet. Click <b>Add</b> to get started.
-    </td></tr>`;
+    tbody=`<tr class="empty-row"><td colspan="${sc.tableCols.length+1}">
+      <span class="empty-icon">📭</span>No entries yet. Click Add to get started.</td></tr>`;
   } else {
-    tbody = data.map(row => `
-      <tr>
-        ${cols.map(c => {
-          const val = row[c];
-          const isNum = colTypes[c] === 'num';
-          const formatted = isNum ? tk(val) : escHtml(String(val??'—'));
-          return `<td class="${isNum?'td-num':''}${c==='Ser'?' td-ser':''}">${formatted}</td>`;
-        }).join('')}
-        <td class="td-act">
-          <button class="btn-icon btn-edit" title="Edit" onclick='openEditModal("${schemaKey}", ${JSON.stringify(row).replace(/'/g,"&#39;")})'>✏️</button>
-          <button class="btn-icon btn-del"  title="Delete" onclick="deleteItem('${schema.sheet}', ${row._row}, '${schemaKey}')">🗑️</button>
-        </td>
-      </tr>`).join('');
-  }
-
-  const totalLabel = isNegative ? `Total Payable` : `Total`;
-  const totalColor = isNegative ? 'color:var(--danger)' : 'color:var(--primary)';
-
-  container.innerHTML = `
-    <div class="table-info">
-      <span>${data.length} ${data.length===1?'entry':'entries'}</span>
-      <span style="font-weight:700;${totalColor}">${totalLabel}: ${tk(total)}</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          ${cols.map(c => `<th class="${(schema.colTypes||{})[c]==='num'?'text-right':''}">${escHtml(c)}</th>`).join('')}
-          <th style="text-align:center">Actions</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-        ${data.length ? `<tfoot><tr>
-          ${cols.map((c,i) => i===0
-            ? `<td style="font-size:11px">TOTAL</td>`
-            : c === schema.totalCol
-              ? `<td class="tfoot-num" style="${totalColor}">${tk(total)}</td>`
-              : `<td></td>`
-          ).join('')}
-          <td></td>
-        </tr></tfoot>` : ''}
-      </table>
-    </div>`;
-}
-
-// ══════════════════════════════════════════════
-// MARKET VALUES
-// ══════════════════════════════════════════════
-
-function renderMarket() {
-  const mkt = appData.market || [];
-  const gold   = mkt.filter(m => m['Type'] === 'Gold');
-  const silver = mkt.filter(m => m['Type'] === 'Silver');
-
-  const card = (m, cls) => `
-    <div class="mkt-card ${cls}">
-      <div class="mkt-type">${escHtml(m['Type'])}</div>
-      <div class="mkt-karat">${escHtml(String(m['KARAT']))} Karat</div>
-      <div class="mkt-price">৳ ${num(m['Price Per Gram (Tk)'])} <span>per gram</span></div>
-      <div class="mkt-updated">Updated: ${escHtml(String(m['Last Updated']||'—'))}</div>
-      <div class="mkt-edit-row">
-        <input type="number" id="mkt_${m['Type']}_${m['KARAT']}"
-          value="${+(m['Price Per Gram (Tk)']||0)}" step="0.01" min="0"
-          placeholder="Price/gram (৳)">
-        <button class="btn btn-primary btn-sm"
-          onclick="saveMarketPrice('${m['Type']}','${m['KARAT']}')">Save</button>
-      </div>
-    </div>`;
-
-  const el = document.getElementById('market-content');
-  el.innerHTML = `
-    <div class="card mb-16" style="border-left:4px solid var(--gold);background:var(--gold-light)">
-      <div class="card-body" style="padding:12px 16px">
-        <b>ℹ️ Tip:</b> Click <b>Fetch from Bajus.org</b> to auto-update prices,
-        or enter prices manually below and click Save.
-        After updating, click <b>Recalculate Assets</b> to refresh your Gold & Silver values.
-      </div>
-    </div>
-    <h4 style="margin-bottom:10px;color:var(--gold);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">🏅 Gold Prices</h4>
-    <div class="market-grid mb-20">${gold.map(m => card(m,'mkt-gold')).join('')}</div>
-    <h4 style="margin-bottom:10px;color:#607D8B;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">🥈 Silver Prices</h4>
-    <div class="market-grid">${silver.map(m => card(m,'mkt-silver')).join('')}</div>
-  `;
-}
-
-async function saveMarketPrice(type, karat) {
-  const el    = document.getElementById(`mkt_${type}_${karat}`);
-  const price = parseFloat(el.value || 0);
-  showLoader('Saving price…');
-  try {
-    const r = await API.post('setMarket', { type, karat, price });
-    if (r.error) throw new Error(r.error);
-    toast(`✓ ${type} ${karat}K: ৳${price}/g saved`, 'success');
-    await refreshMarket();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
-}
-
-async function fetchMarket() {
-  showLoader('Fetching prices from Bajus.org…');
-  try {
-    const r = await API.get('fetchMarket');
-    if (!r.success) {
-      toast(r.error || 'Could not fetch prices', 'warning');
-    } else {
-      toast(`✓ ${r.message}`, 'success');
-    }
-    await refreshMarket();
-  } catch (e) { toast('Fetch error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
-}
-
-async function refreshMarket() {
-  const r = await API.get('getAllData');
-  if (r.market) appData.market = r.market;
-  if (r.calc)   appData.calc   = r.calc;
-  renderMarket();
-  renderDashboard();
-}
-
-async function recalcMetals() {
-  showLoader('Recalculating gold & silver values…');
-  try {
-    const r = await API.post('recalcMetals', {});
-    if (r.error) throw new Error(r.error);
-    toast('✓ ' + r.message, 'success');
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
-}
-
-// ══════════════════════════════════════════════
-// TIMEFRAMES
-// ══════════════════════════════════════════════
-
-function renderTimeframes() {
-  const tfs  = appData.timeframes || [];
-  const pays = appData.payments   || [];
-  const el   = document.getElementById('tf-content');
-  if (!el) return;
-
-  const lifetimeDue  = tfs.reduce((a, t) => a + (+(t['Zakat Due (Tk)']||0)), 0);
-  const lifetimePaid = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-
-  if (!tfs.length) {
-    el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:50px">
-      <div style="font-size:48px;margin-bottom:12px">📅</div>
-      <div style="font-size:15px;font-weight:600;margin-bottom:6px">No timeframes yet</div>
-      <div style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
-        Create a Zakat timeframe to track your annual Zakat obligation
-      </div>
-      <button class="btn btn-primary" onclick="openAddTFModal()">+ Create First Timeframe</button>
-    </div></div>`;
-    return;
-  }
-
-  const tfCards = tfs.map(tf => {
-    const isActive = tf['Status'] === 'Active';
-    const paid     = +(tf['Paid (Tk)']||0);
-    const due      = +(tf['Zakat Due (Tk)']||0);
-    const rem      = Math.max(0, due - paid);
-    const paidPct  = due > 0 ? Math.min(100, (paid/due)*100) : 0;
-    return `
-    <div class="tf-card ${isActive ? 'tf-active' : ''}">
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span class="tf-label">${escHtml(String(tf['Label']||'Unnamed'))}</span>
-          <span class="badge badge-${(tf['Status']||'draft').toLowerCase()}">${escHtml(String(tf['Status']||'Draft'))}</span>
-          ${tf['Nisab Met']==='Yes' ? `<span class="badge badge-yes">Nisab Met</span>` : `<span class="badge badge-no">Below Nisab</span>`}
-        </div>
-        <div class="tf-dates">
-          📅 ${fdate(tf['Start Date'])} → ${fdate(tf['End Date'])}
-          &nbsp;|&nbsp; ${tf['Days']} days
-        </div>
-        <div class="tf-meta">
-          <span>Rate: <b>${pct(tf['Rate (%)'])}</b></span>
-          <span>Wealth: <b>${tk(tf['Zakatable Wealth (Tk)'])}</b></span>
-          <span>Due: <b style="color:var(--danger)">${tk(due)}</b></span>
-          <span>Paid: <b style="color:var(--success)">${tk(paid)}</b></span>
-          ${rem > 0 ? `<span>Remaining: <b style="color:var(--warning)">${tk(rem)}</b></span>` : `<span style="color:var(--success)">✓ Fully Paid</span>`}
-        </div>
-        ${due > 0 ? `
-        <div style="margin-top:8px">
-          <div class="nisab-bar-wrap" style="height:5px">
-            <div class="nisab-bar ${paidPct>=100?'over':''}" style="width:${paidPct.toFixed(1)}%"></div>
-          </div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${paidPct.toFixed(0)}% paid</div>
-        </div>` : ''}
-      </div>
-      <div class="tf-actions">
-        <button class="btn-icon btn-edit" title="Edit" onclick='openEditTFModal(${JSON.stringify(tf).replace(/'/g,"&#39;")})'>✏️</button>
-        <button class="btn-icon btn-del"  title="Delete" onclick="deleteTF(${tf._row})">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="history-grid mb-20">
-      <div class="hist-card">
-        <div class="hc-label">Total Periods</div>
-        <div class="hc-val hc-green">${tfs.length}</div>
-        <div class="hc-sub">Recorded timeframes</div>
-      </div>
-      <div class="hist-card">
-        <div class="hc-label">Total Zakat Due</div>
-        <div class="hc-val hc-red">${tk(lifetimeDue)}</div>
-        <div class="hc-sub">Across all periods</div>
-      </div>
-      <div class="hist-card">
-        <div class="hc-label">Total Paid</div>
-        <div class="hc-val hc-gold">${tk(lifetimePaid)}</div>
-        <div class="hc-sub">${pays.length} payment(s)</div>
-      </div>
-    </div>
-    <div class="tf-list">${tfCards}</div>`;
-}
-
-function openAddTFModal() {
-  const today = new Date().toISOString().split('T')[0];
-  const body = `
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe Label *</label>
-        <input id="tf_label" class="form-control" placeholder="e.g. 12 Ramadan 1447 – 12 Ramadan 1448">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Start Date *</label>
-        <input id="tf_start" class="form-control" type="date" value="${today}"
-          oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Date *</label>
-        <input id="tf_end" class="form-control" type="date" oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Base Zakat Rate (%)</label>
-        <input id="tf_rate" class="form-control" type="number" value="2.5" step="0.01"
-          oninput="calcTFPreview()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select id="tf_status" class="form-control">
-          <option value="Active">Active</option>
-          <option value="Completed">Completed</option>
-          <option value="Draft">Draft</option>
-        </select>
-      </div>
-      <div id="tf-preview" style="grid-column:1/-1;background:var(--primary-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--primary)">
-        ℹ️ Enter start and end dates to see calculation preview
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <textarea id="tf_notes" class="form-control" rows="2" placeholder="Optional notes…"></textarea>
-      </div>
-    </div>`;
-
-  openModal({
-    title: '📅 New Zakat Timeframe',
-    body,
-    wide : true,
-    save : saveTF,
-    saveLabel: 'Create Timeframe'
-  });
-}
-
-function calcTFPreview() {
-  const start = document.getElementById('tf_start')?.value;
-  const end   = document.getElementById('tf_end')?.value;
-  const rate  = parseFloat(document.getElementById('tf_rate')?.value || 2.5);
-  const prev  = document.getElementById('tf-preview');
-  if (!prev) return;
-
-  if (start && end) {
-    const days    = Math.round((new Date(end) - new Date(start)) / 86400000);
-    const effRate = ((rate * days) / 354).toFixed(4);
-    const due     = (appData.calc?.total || 0) * effRate / 100;
-    prev.innerHTML = `
-      📊 <b>${days} days</b> &nbsp;|&nbsp; Effective rate: <b>${pct(effRate)}</b>
-      (${rate}% × ${days} ÷ 354) &nbsp;|&nbsp;
-      Est. Zakat Due: <b style="color:var(--danger)">${tk(due)}</b>
-      <span style="color:var(--text-muted)">(based on current wealth of ${tk(appData.calc?.total)})</span>`;
-  }
-}
-
-async function saveTF() {
-  const d = {
-    label    : document.getElementById('tf_label')?.value?.trim(),
-    startDate: document.getElementById('tf_start')?.value,
-    endDate  : document.getElementById('tf_end')?.value,
-    rate     : document.getElementById('tf_rate')?.value,
-    status   : document.getElementById('tf_status')?.value,
-    notes    : document.getElementById('tf_notes')?.value?.trim(),
-  };
-  if (!d.label || !d.startDate || !d.endDate) {
-    toast('Please fill in all required fields', 'warning'); return;
-  }
-  showLoader('Saving timeframe…');
-  try {
-    const r = await API.post('addTF', d);
-    if (r.error) throw new Error(r.error);
-    toast(`✓ Timeframe "${d.label}" created. Zakat Due: ${tk(r.zakatDue)}`, 'success');
-    closeModal();
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
-}
-
-function openEditTFModal(tf) {
-  const start = tf['Start Date'] ? new Date(tf['Start Date']).toISOString().split('T')[0] : '';
-  const end   = tf['End Date']   ? new Date(tf['End Date']).toISOString().split('T')[0]   : '';
-
-  const body = `
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe Label *</label>
-        <input id="etf_label" class="form-control" value="${escHtml(String(tf['Label']||''))}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Start Date *</label>
-        <input id="etf_start" class="form-control" type="date" value="${start}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">End Date *</label>
-        <input id="etf_end" class="form-control" type="date" value="${end}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select id="etf_status" class="form-control">
-          <option value="Active"    ${tf['Status']==='Active'    ?'selected':''}>Active</option>
-          <option value="Completed" ${tf['Status']==='Completed' ?'selected':''}>Completed</option>
-          <option value="Draft"     ${tf['Status']==='Draft'     ?'selected':''}>Draft</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Paid (৳)</label>
-        <input id="etf_paid" class="form-control" type="number" value="${+(tf['Paid (Tk)']||0)}" step="0.01">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <textarea id="etf_notes" class="form-control" rows="2">${escHtml(String(tf['Notes']||''))}</textarea>
-      </div>
-    </div>`;
-
-  openModal({
-    title: '✏️ Edit Timeframe',
-    body, wide: true,
-    save: async () => {
-      const s  = document.getElementById('etf_start').value;
-      const e  = document.getElementById('etf_end').value;
-      const days = s && e ? Math.round((new Date(e) - new Date(s)) / 86400000) : +(tf['Days']||354);
-      const d  = {
-        'Label'                : document.getElementById('etf_label').value.trim(),
-        'Start Date'           : s,
-        'End Date'             : e,
-        'Days'                 : days,
-        'Rate (%)'             : +(document.getElementById('etf_start').value ? ((2.5*days)/354).toFixed(4) : tf['Rate (%)']),
-        'Status'               : document.getElementById('etf_status').value,
-        'Paid (Tk)'            : +(document.getElementById('etf_paid').value||0),
-        'Notes'                : document.getElementById('etf_notes').value.trim(),
-        'Zakatable Wealth (Tk)': tf['Zakatable Wealth (Tk)'],
-        'Nisab Met'            : tf['Nisab Met'],
-        'Zakat Due (Tk)'       : tf['Zakat Due (Tk)'],
-      };
-      showLoader('Updating…');
-      try {
-        const r = await API.post('update', d, { sheet: 'Zakat_Timeframes', row: tf._row });
-        if (r.error) throw new Error(r.error);
-        // If set to Active, update settings days
-        if (d.Status === 'Active') {
-          await API.post('saveSettings', { active_tf_days: String(days), active_tf_label: d.Label, active_tf_row: String(tf._row) });
-        }
-        toast('✓ Timeframe updated', 'success');
-        closeModal();
-        await loadAll();
-      } catch (err) { toast('Error: ' + err.message, 'error'); }
-      finally { hideLoader(); }
-    },
-    saveLabel: 'Update'
-  });
-}
-
-async function deleteTF(row) {
-  confirmDialog('Delete this timeframe? This cannot be undone.', async () => {
-    showLoader('Deleting…');
-    try {
-      const r = await API.post('deleteTF', {}, { row });
-      if (r.error) throw new Error(r.error);
-      toast('Timeframe deleted', 'success');
-      await loadAll();
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
-  });
-}
-
-// ══════════════════════════════════════════════
-// PAYMENTS
-// ══════════════════════════════════════════════
-
-function renderPayments() {
-  const pays = appData.payments   || [];
-  const tfs  = appData.timeframes || [];
-  const el   = document.getElementById('pay-content');
-  if (!el) return;
-
-  const total = pays.reduce((a, p) => a + (+(p['Amount (Tk)']||0)), 0);
-
-  let tbody = '';
-  if (!pays.length) {
-    tbody = `<tr class="empty-row"><td colspan="6">
-      <span class="empty-icon">💸</span>No payments recorded yet.
-    </td></tr>`;
-  } else {
-    tbody = [...pays].reverse().map(p => `<tr>
-      <td class="td-ser">${p['Ser']}</td>
-      <td>${fdate(p['Date'])}</td>
-      <td style="font-size:12px">${escHtml(String(p['Timeframe']||'—'))}</td>
-      <td class="td-num" style="font-weight:700;color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${escHtml(String(p['Notes']||'—'))}</td>
+    tbody=data.map(row=>`<tr>
+      ${sc.tableCols.map(c=>{
+        const v=row[c], isN=ct[c]==='num';
+        return `<td class="${isN?'td-num':''}${c==='Ser'?' td-ser':''}">${isN?tk(v):escHtml(String(v??'—'))}</td>`;
+      }).join('')}
       <td class="td-act">
-        <button class="btn-icon btn-del" onclick="deletePayment(${p._row})">🗑️</button>
+        <button class="btn-icon btn-edit" onclick='openEditModal("${key}",${JSON.stringify(row).replace(/'/g,"&#39;")})' title="Edit">✏️</button>
+        <button class="btn-icon btn-del"  onclick="deleteItem('${sc.sheet}',${row._row},'${key}')" title="Delete">🗑️</button>
       </td>
     </tr>`).join('');
   }
 
-  el.innerHTML = `
-    <div class="table-info mb-0">
-      <span>${pays.length} payment(s)</span>
-      <span style="font-weight:700;color:var(--primary)">Total Paid: ${tk(total)}</span>
+  el.innerHTML=`
+    <div class="table-info">
+      <span>${data.length} entr${data.length===1?'y':'ies'}</span>
+      <span style="font-weight:700;color:${neg?'var(--danger)':'var(--primary)'}">
+        ${neg?'Total Payable':'Total'}: ${tk(total)}</span>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>#</th><th>Date</th><th>Timeframe</th>
-          <th class="text-right">Amount (৳)</th><th>Notes</th><th style="text-align:center">Del</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-        ${pays.length ? `<tfoot><tr>
-          <td colspan="3" style="font-size:11px">TOTAL PAID</td>
-          <td class="tfoot-num">${tk(total)}</td>
-          <td colspan="2"></td>
-        </tr></tfoot>` : ''}
-      </table>
+    <div class="table-wrap"><table>
+      <thead><tr>${sc.tableCols.map(c=>`<th class="${(ct[c]==='num')?'text-right':''}">${escHtml(c)}</th>`).join('')}<th style="text-align:center">Actions</th></tr></thead>
+      <tbody>${tbody}</tbody>
+      ${data.length?`<tfoot><tr>
+        ${sc.tableCols.map((c,i)=>i===0?`<td style="font-size:11px">TOTAL</td>`:c===sc.totalCol?`<td class="tfoot-num" style="color:${neg?'var(--danger)':'var(--primary)'}">${tk(total)}</td>`:`<td></td>`).join('')}
+        <td></td>
+      </tr></tfoot>`:''}
+    </table></div>`;
+}
+
+// ══════ MARKET VALUES ════════════════════════════════════════
+function renderMarket() {
+  const mkt=appData.market||[];
+  const gold=mkt.filter(m=>m['Type']==='Gold'), silver=mkt.filter(m=>m['Type']==='Silver');
+
+  const card=(m,cls)=>`<div class="mkt-card ${cls}">
+    <div class="mkt-type">${escHtml(m['Type'])}</div>
+    <div class="mkt-karat">${escHtml(String(m['KARAT']))} K</div>
+    <div class="mkt-price">৳ ${num(m['Price Per Gram (Tk)'])} <span>/gram</span></div>
+    <div class="mkt-updated">${escHtml(String(m['Last Updated']||'—'))}</div>
+    <input type="number" class="mkt-input" id="mkt_${m['Type']}_${m['KARAT']}"
+      value="${+(m['Price Per Gram (Tk)']||0)}" step="0.01" min="0"
+      placeholder="Price per gram (৳)">
+  </div>`;
+
+  const el=document.getElementById('sec-market'); if (!el) return;
+  el.innerHTML=`
+    <div class="sec-header">
+      <div><h3>📊 Market Values</h3><p>Gold &amp; silver prices per gram (BDT)</p></div>
+      <div class="sec-actions">
+        <button class="btn btn-outline btn-sm" onclick="fetchMarket()">🌐 Fetch from Bajus.org</button>
+        <button class="btn btn-outline btn-sm" onclick="recalcMetals()">♻ Recalculate Assets</button>
+      </div>
+    </div>
+    <div class="info-box info-gold mb-16">
+      💡 <b>Enter prices per gram in ৳</b> below, then click <b>Save All Prices</b>.
+      Or click <b>Fetch from Bajus.org</b> to auto-update. After updating, use <b>Recalculate Assets</b>.
+    </div>
+    <div class="mkt-section-title" style="color:var(--gold)">🏅 Gold Prices</div>
+    <div class="mkt-grid mb-16">${gold.map(m=>card(m,'mkt-gold')).join('')}</div>
+    <div class="mkt-section-title" style="color:#607D8B">🥈 Silver Prices</div>
+    <div class="mkt-grid mb-20">${silver.map(m=>card(m,'mkt-silver')).join('')}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="saveAllMarket()">💾 Save All Prices</button>
     </div>`;
 }
 
+async function saveAllMarket() {
+  const mkt = appData.market||[];
+  const prices = mkt.map(m=>({
+    type : m['Type'],
+    karat: String(m['KARAT']),
+    price: parseFloat(document.getElementById(`mkt_${m['Type']}_${m['KARAT']}`)?.value||0)
+  }));
+  showLoader('Saving all prices…');
+  try {
+    const r = await API.post('setAllMarket', { prices });
+    if (r.error) throw new Error(r.error);
+    toast(`✓ ${r.updated} price(s) saved (${r.ts})`, 'success');
+    const all = await API.get('getAllData');
+    if (!all.error) { appData=all; renderAll(); }
+  } catch(e) { toast('Error: '+e.message,'error'); }
+  finally { hideLoader(); }
+}
+
+async function fetchMarket() {
+  showLoader('Fetching from Bajus.org… (this may take ~10s)');
+  try {
+    const r = await API.get('fetchMarket');
+    if (!r.success || r.error) {
+      toast('⚠ '+( r.error||'Could not fetch prices'), 'warning');
+      if (r.hint) toast(r.hint, 'info');
+    } else {
+      toast('✓ '+r.message, 'success');
+    }
+    if (r.log && r.log.length) console.log('Bajus fetch log:', r.log);
+    const all = await API.get('getAllData');
+    if (!all.error) { appData=all; renderAll(); }
+  } catch(e) { toast('Fetch error: '+e.message,'error'); }
+  finally { hideLoader(); }
+}
+
+async function recalcMetals() {
+  showLoader('Recalculating…');
+  try {
+    const r = await API.post('recalcMetals', {});
+    if (r.error) throw new Error(r.error);
+    toast('✓ '+r.message,'success');
+    await loadAll();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+  finally { hideLoader(); }
+}
+
+// ══════ TIMEFRAMES ═══════════════════════════════════════════
+function renderTimeframes() {
+  const tfs=appData.timeframes||[], pays=appData.payments||[];
+  const el=document.getElementById('tf-content'); if (!el) return;
+  const lifeDue=tfs.reduce((a,t)=>a+(+(t['Zakat Due (Tk)']||0)),0);
+  const lifePaid=pays.reduce((a,p)=>a+(+(p['Amount (Tk)']||0)),0);
+
+  if (!tfs.length) {
+    el.innerHTML=`<div class="card"><div class="card-body" style="text-align:center;padding:50px">
+      <div style="font-size:46px;margin-bottom:12px">📅</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">No timeframes yet</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Create a timeframe to track your Zakat obligation</div>
+      <button class="btn btn-primary" onclick="openAddTFModal()">+ Create First Timeframe</button>
+    </div></div>`; return;
+  }
+
+  el.innerHTML=`
+    <div class="hist-grid mb-16">
+      <div class="hist-card"><div class="hc-label">Periods</div><div class="hc-val hc-g">${tfs.length}</div><div class="hc-sub">Recorded</div></div>
+      <div class="hist-card"><div class="hc-label">Total Due</div><div class="hc-val hc-r">${tk(lifeDue)}</div><div class="hc-sub">All periods</div></div>
+      <div class="hist-card"><div class="hc-label">Total Paid</div><div class="hc-val hc-o">${tk(lifePaid)}</div><div class="hc-sub">${pays.length} payment(s)</div></div>
+    </div>
+    <div class="tf-list">${tfs.map(tf=>{
+      const isA=tf['Status']==='Active', paid=+(tf['Paid (Tk)']||0), due=+(tf['Zakat Due (Tk)']||0);
+      const rem=Math.max(0,due-paid), pp=due>0?Math.min(100,(paid/due)*100):0;
+      return `<div class="tf-card ${isA?'tf-active':''}">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <span class="tf-label">${escHtml(String(tf['Label']||'Unnamed'))}</span>
+            <span class="badge badge-${(tf['Status']||'draft').toLowerCase()}">${escHtml(String(tf['Status']||'Draft'))}</span>
+            <span class="badge badge-${tf['Nisab Met']==='Yes'?'yes':'no'}">${tf['Nisab Met']==='Yes'?'Nisab ✓':'Below Nisab'}</span>
+          </div>
+          <div class="tf-dates">📅 ${fdate(tf['Start Date'])} → ${fdate(tf['End Date'])} | ${tf['Days']} days</div>
+          <div class="tf-meta">
+            <span>Rate: <b>${pct(tf['Rate (%)'])}</b></span>
+            <span>Wealth: <b>${tk(tf['Zakatable Wealth (Tk)'])}</b></span>
+            <span>Due: <b style="color:var(--danger)">${tk(due)}</b></span>
+            <span>Paid: <b style="color:var(--primary)">${tk(paid)}</b></span>
+            ${rem>0?`<span>Rem: <b style="color:var(--warning)">${tk(rem)}</b></span>`:`<span style="color:var(--primary)">✓ Fully Paid</span>`}
+          </div>
+          ${due>0?`<div style="margin-top:8px">
+            <div class="bar-wrap" style="height:5px"><div class="bar ${pp>=100?'over':''}" style="width:${pp.toFixed(1)}%"></div></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">${pp.toFixed(0)}% paid</div>
+          </div>`:''}
+        </div>
+        <div class="tf-actions">
+          <button class="btn-icon btn-edit" onclick='openEditTFModal(${JSON.stringify(tf).replace(/'/g,"&#39;")})' title="Edit">✏️</button>
+          <button class="btn-icon btn-del"  onclick="deleteTF(${tf._row})" title="Delete">🗑️</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function openAddTFModal() {
+  const today=new Date().toISOString().split('T')[0];
+  openModal({ title:'📅 New Zakat Timeframe', wide:true, saveLabel:'Create Timeframe', save:saveTF,
+    body:`<div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Label *</label>
+        <input id="tf_label" class="form-control" placeholder="e.g. 12 Ramadan 1447 – 12 Ramadan 1448">
+      </div>
+      <div class="form-group"><label class="form-label">Start Date *</label>
+        <input id="tf_start" class="form-control" type="date" value="${today}" oninput="calcTFPreview()"></div>
+      <div class="form-group"><label class="form-label">End Date *</label>
+        <input id="tf_end"   class="form-control" type="date" oninput="calcTFPreview()"></div>
+      <div class="form-group"><label class="form-label">Base Rate (%)</label>
+        <input id="tf_rate"  class="form-control" type="number" value="2.5" step="0.01" oninput="calcTFPreview()"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="tf_status" class="form-control">
+          <option value="Active">Active</option><option value="Completed">Completed</option><option value="Draft">Draft</option>
+        </select></div>
+      <div id="tf-preview" class="info-box info-green" style="grid-column:1/-1">ℹ️ Enter dates to see preview</div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label>
+        <textarea id="tf_notes" class="form-control" rows="2" placeholder="Optional"></textarea></div>
+    </div>`
+  });
+}
+
+function calcTFPreview() {
+  const s=document.getElementById('tf_start')?.value, e=document.getElementById('tf_end')?.value;
+  const rate=parseFloat(document.getElementById('tf_rate')?.value||2.5), prev=document.getElementById('tf-preview');
+  if (!prev||!s||!e) return;
+  const days=Math.round((new Date(e)-new Date(s))/86400000);
+  const effR=((rate*days)/354).toFixed(4);
+  const due=(appData.calc?.total||0)*effR/100;
+  prev.innerHTML=`📊 <b>${days} days</b> | Rate: <b>${pct(effR)}</b> (${rate}%×${days}÷354) | Est. Due: <b style="color:var(--danger)">${tk(due)}</b>`;
+}
+
+async function saveTF() {
+  const d={label:document.getElementById('tf_label')?.value?.trim(),
+    startDate:document.getElementById('tf_start')?.value,endDate:document.getElementById('tf_end')?.value,
+    rate:document.getElementById('tf_rate')?.value,status:document.getElementById('tf_status')?.value,
+    notes:document.getElementById('tf_notes')?.value?.trim()};
+  if (!d.label||!d.startDate||!d.endDate){toast('Fill in all required fields','warning');return;}
+  showLoader('Saving…');
+  try {
+    const r=await API.post('addTF',d); if (r.error) throw new Error(r.error);
+    toast(`✓ Timeframe created. Due: ${tk(r.zakatDue)}`,'success');
+    closeModal(); await loadAll();
+  } catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
+}
+
+function openEditTFModal(tf) {
+  const s=tf['Start Date']?new Date(tf['Start Date']).toISOString().split('T')[0]:'';
+  const e=tf['End Date']  ?new Date(tf['End Date']).toISOString().split('T')[0]:'';
+  openModal({ title:'✏️ Edit Timeframe', wide:true, saveLabel:'Update', save:async()=>{
+    const ns=document.getElementById('etf_start').value, ne=document.getElementById('etf_end').value;
+    const days=ns&&ne?Math.round((new Date(ne)-new Date(ns))/86400000):+(tf['Days']||354);
+    const d={'Label':document.getElementById('etf_label').value.trim(),'Start Date':ns,'End Date':ne,
+      'Days':days,'Rate (%)':+((2.5*days)/354).toFixed(4),
+      'Status':document.getElementById('etf_status').value,
+      'Paid (Tk)':+(document.getElementById('etf_paid').value||0),
+      'Notes':document.getElementById('etf_notes').value.trim(),
+      'Zakatable Wealth (Tk)':tf['Zakatable Wealth (Tk)'],'Nisab Met':tf['Nisab Met'],'Zakat Due (Tk)':tf['Zakat Due (Tk)']};
+    showLoader('Updating…');
+    try {
+      const r=await API.post('update',d,{sheet:'Zakat_Timeframes',row:tf._row}); if (r.error) throw new Error(r.error);
+      if (d.Status==='Active') await API.post('saveSettings',{active_tf_days:String(days),active_tf_label:d.Label,active_tf_row:String(tf._row)});
+      toast('✓ Timeframe updated','success'); closeModal(); await loadAll();
+    } catch(err){toast('Error: '+err.message,'error');} finally{hideLoader();}
+  },
+  body:`<div class="form-grid">
+    <div class="form-group" style="grid-column:1/-1"><label class="form-label">Label *</label>
+      <input id="etf_label" class="form-control" value="${escHtml(String(tf['Label']||''))}"></div>
+    <div class="form-group"><label class="form-label">Start Date</label>
+      <input id="etf_start" class="form-control" type="date" value="${s}"></div>
+    <div class="form-group"><label class="form-label">End Date</label>
+      <input id="etf_end"   class="form-control" type="date" value="${e}"></div>
+    <div class="form-group"><label class="form-label">Status</label>
+      <select id="etf_status" class="form-control">
+        <option ${tf['Status']==='Active'?'selected':''}>Active</option>
+        <option ${tf['Status']==='Completed'?'selected':''}>Completed</option>
+        <option ${tf['Status']==='Draft'?'selected':''}>Draft</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Total Paid (৳)</label>
+      <input id="etf_paid" class="form-control" type="number" value="${+(tf['Paid (Tk)']||0)}" step="0.01"></div>
+    <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label>
+      <textarea id="etf_notes" class="form-control" rows="2">${escHtml(String(tf['Notes']||''))}</textarea></div>
+  </div>`});
+}
+
+async function deleteTF(row) {
+  confirmDialog('Delete this timeframe?', async()=>{
+    showLoader('Deleting…');
+    try { const r=await API.post('deleteTF',{},{row}); if (r.error) throw new Error(r.error);
+      toast('Timeframe deleted','success'); await loadAll(); }
+    catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
+  });
+}
+
+// ══════ PAYMENTS ═════════════════════════════════════════════
+function renderPayments() {
+  const pays=appData.payments||[], el=document.getElementById('pay-content'); if (!el) return;
+  const total=pays.reduce((a,p)=>a+(+(p['Amount (Tk)']||0)),0);
+  let tbody='';
+  if (!pays.length) {
+    tbody=`<tr class="empty-row"><td colspan="6"><span class="empty-icon">💸</span>No payments recorded.</td></tr>`;
+  } else {
+    tbody=[...pays].reverse().map(p=>`<tr>
+      <td class="td-ser">${p['Ser']}</td>
+      <td>${fdate(p['Date'])}</td>
+      <td style="font-size:11px;color:var(--muted)">${escHtml(String(p['Timeframe']||'—'))}</td>
+      <td class="td-num fw7" style="color:var(--primary)">${tk(p['Amount (Tk)'])}</td>
+      <td style="font-size:11px;color:var(--muted)">${escHtml(String(p['Notes']||'—'))}</td>
+      <td class="td-act">
+        <button class="btn-icon btn-edit" onclick='openEditPaymentModal(${JSON.stringify(p).replace(/'/g,"&#39;")})' title="Edit">✏️</button>
+        <button class="btn-icon btn-del"  onclick="deletePayment(${p._row})" title="Delete">🗑️</button>
+      </td>
+    </tr>`).join('');
+  }
+  el.innerHTML=`
+    <div class="table-info"><span>${pays.length} payment(s)</span>
+      <span style="font-weight:700;color:var(--primary)">Total Paid: ${tk(total)}</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Date</th><th>Timeframe</th><th class="text-right">Amount</th><th>Notes</th><th style="text-align:center">Actions</th></tr></thead>
+      <tbody>${tbody}</tbody>
+      ${pays.length?`<tfoot><tr><td colspan="3" style="font-size:11px">TOTAL PAID</td>
+        <td class="tfoot-num">${tk(total)}</td><td colspan="2"></td></tr></tfoot>`:''}
+    </table></div>`;
+}
+
 function openAddPaymentModal() {
-  const tfs   = appData.timeframes || [];
-  const today = new Date().toISOString().split('T')[0];
-  const activeTF = tfs.find(t => t['Status'] === 'Active');
-  const tfOpts = tfs.map(tf =>
-    `<option value="${escHtml(String(tf['Label']||''))}" data-row="${tf._row}"
-      ${activeTF && tf._row === activeTF._row ? 'selected' : ''}>
-      ${escHtml(String(tf['Label']||'Unnamed'))} (${fdate(tf['Start Date'])}–${fdate(tf['End Date'])})
-    </option>`
-  ).join('');
+  const tfs=appData.timeframes||[], today=new Date().toISOString().split('T')[0];
+  const aTF=tfs.find(t=>t['Status']==='Active');
+  const opts=tfs.map(t=>`<option value="${escHtml(String(t['Label']||''))}" data-row="${t._row}"
+    ${aTF&&t._row===aTF._row?'selected':''}>${escHtml(String(t['Label']||'Unnamed'))}</option>`).join('');
+  openModal({ title:'💸 Record Payment', saveLabel:'Record Payment',
+    body:`<div class="form-grid">
+      <div class="form-group"><label class="form-label">Date *</label>
+        <input id="pay_date" class="form-control" type="date" value="${today}"></div>
+      <div class="form-group"><label class="form-label">Amount (৳) *</label>
+        <input id="pay_amount" class="form-control" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Timeframe</label>
+        <select id="pay_tf" class="form-control"><option value="">— Select —</option>${opts}</select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label>
+        <input id="pay_notes" class="form-control" placeholder="e.g. Paid to Masjid via bKash"></div>
+    </div>`,
+    save:async()=>{
+      const tfSel=document.getElementById('pay_tf'), tfRow=tfSel.options[tfSel.selectedIndex]?.dataset.row;
+      const amount=parseFloat(document.getElementById('pay_amount').value||0);
+      if (!amount){toast('Enter a valid amount','warning');return;}
+      const d={date:document.getElementById('pay_date').value,amount,timeframe:tfSel.value,
+        notes:document.getElementById('pay_notes').value.trim(),tfRow:tfRow||''};
+      showLoader('Saving…');
+      try { const r=await API.post('addPayment',d); if (r.error) throw new Error(r.error);
+        toast(`✓ Payment of ${tk(amount)} recorded`,'success'); closeModal(); await loadAll(); }
+      catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
+    }
+  });
+}
 
-  const body = `
-    <div class="form-grid">
-      <div class="form-group">
-        <label class="form-label">Payment Date *</label>
-        <input id="pay_date" class="form-control" type="date" value="${today}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Amount (৳) *</label>
-        <input id="pay_amount" class="form-control" type="number" step="0.01" placeholder="0.00">
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Timeframe</label>
-        <select id="pay_tf" class="form-control">
-          <option value="">— Select Timeframe —</option>
-          ${tfOpts}
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Notes</label>
-        <input id="pay_notes" class="form-control" placeholder="e.g. Paid via bKash to Masjid">
-      </div>
-    </div>`;
-
-  openModal({
-    title: '💸 Record Zakat Payment',
-    body, wide: false,
-    save: async () => {
-      const tfSel  = document.getElementById('pay_tf');
-      const tfRow  = tfSel.options[tfSel.selectedIndex]?.dataset.row;
-      const amount = parseFloat(document.getElementById('pay_amount').value || 0);
-      if (!amount) { toast('Enter a valid amount', 'warning'); return; }
-
-      const d = {
-        date     : document.getElementById('pay_date').value,
-        amount,
-        timeframe: tfSel.value,
-        notes    : document.getElementById('pay_notes').value.trim(),
-        tfRow    : tfRow || '',
-      };
-      showLoader('Saving payment…');
-      try {
-        const r = await API.post('addPayment', d);
-        if (r.error) throw new Error(r.error);
-        toast(`✓ Payment of ${tk(amount)} recorded`, 'success');
-        closeModal();
-        await loadAll();
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
-    },
-    saveLabel: 'Record Payment'
+function openEditPaymentModal(p) {
+  const tfs=appData.timeframes||[];
+  const dt=p['Date']?new Date(p['Date']).toISOString().split('T')[0]:'';
+  const opts=tfs.map(t=>`<option value="${escHtml(String(t['Label']||''))}" data-row="${t._row}"
+    ${String(t['Label']||'')==String(p['Timeframe']||'')?'selected':''}>${escHtml(String(t['Label']||'Unnamed'))}</option>`).join('');
+  openModal({ title:'✏️ Edit Payment', saveLabel:'Update Payment',
+    body:`<div class="form-grid">
+      <div class="form-group"><label class="form-label">Date *</label>
+        <input id="ep_date"   class="form-control" type="date" value="${dt}"></div>
+      <div class="form-group"><label class="form-label">Amount (৳) *</label>
+        <input id="ep_amount" class="form-control" type="number" step="0.01" value="${+(p['Amount (Tk)']||0)}"></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Timeframe</label>
+        <select id="ep_tf" class="form-control"><option value="">— Select —</option>${opts}</select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label>
+        <input id="ep_notes" class="form-control" value="${escHtml(String(p['Notes']||''))}" placeholder="Optional notes"></div>
+    </div>`,
+    save:async()=>{
+      const tfSel=document.getElementById('ep_tf');
+      const d={'Date':document.getElementById('ep_date').value,
+        'Amount (Tk)':parseFloat(document.getElementById('ep_amount').value||0),
+        'Timeframe':tfSel.value,'Notes':document.getElementById('ep_notes').value.trim()};
+      if (!d['Amount (Tk)']){toast('Enter a valid amount','warning');return;}
+      showLoader('Updating…');
+      try { const r=await API.post('update',d,{sheet:'Zakat_Payments',row:p._row}); if (r.error) throw new Error(r.error);
+        toast('✓ Payment updated','success'); closeModal(); await loadAll(); }
+      catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
+    }
   });
 }
 
 async function deletePayment(row) {
-  confirmDialog('Delete this payment record?', async () => {
+  confirmDialog('Delete this payment?', async()=>{
     showLoader('Deleting…');
-    try {
-      const r = await API.post('deletePayment', {}, { row });
-      if (r.error) throw new Error(r.error);
-      toast('Payment deleted', 'success');
-      await loadAll();
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
+    try { const r=await API.post('deletePayment',{},{row}); if (r.error) throw new Error(r.error);
+      toast('Payment deleted','success'); await loadAll(); }
+    catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
   });
 }
 
-// ══════════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════════
-
+// ══════ SETTINGS ═════════════════════════════════════════════
 function renderSettings() {
-  const s = appData.settings || {};
-  const el = document.getElementById('settings-content');
-  if (!el) return;
-
-  const toggle = (key, label, hint='') => `
-    <div class="toggle-group" style="padding:8px 0;border-bottom:1px solid var(--border-light)">
-      <label class="toggle">
-        <input type="checkbox" id="s_${key}" ${s[key]==='true'?'checked':''}
-          onchange="settingChanged()">
-        <span class="toggle-slider"></span>
-      </label>
-      <div>
-        <div class="toggle-label">${label}</div>
-        ${hint ? `<div style="font-size:11px;color:var(--text-muted)">${hint}</div>` : ''}
-      </div>
-    </div>`;
-
-  el.innerHTML = `
-    <div class="settings-grid">
-
-      <!-- NISAB -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">📐 Nisab Calculation</div></div>
-        <div class="card-body">
-          <div class="settings-section">
-            <div class="ss-title">Nisab Based On</div>
-            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px">
-              <div class="form-group">
-                <label class="form-label">Metal</label>
-                <select id="s_nisab_type" class="form-control" onchange="settingChanged()">
-                  <option value="silver" ${s.nisab_type==='silver'?'selected':''}>Silver (52.5 Tola)</option>
-                  <option value="gold"   ${s.nisab_type==='gold'  ?'selected':''}>Gold (7.5 Tola)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Karat</label>
-                <select id="s_nisab_karat" class="form-control" onchange="settingChanged()">
-                  <option value="22"          ${s.nisab_karat==='22'         ?'selected':''}>22 Karat</option>
-                  <option value="21"          ${s.nisab_karat==='21'         ?'selected':''}>21 Karat</option>
-                  <option value="18"          ${s.nisab_karat==='18'         ?'selected':''}>18 Karat</option>
-                  <option value="Traditional" ${s.nisab_karat==='Traditional'?'selected':''}>Traditional</option>
-                </select>
-              </div>
-            </div>
-            <div id="nisab-preview" style="margin-top:10px;padding:10px;background:var(--gold-light);border-radius:var(--radius-sm);font-size:12px"></div>
-          </div>
+  const s=appData.settings||{}, el=document.getElementById('settings-content'); if (!el) return;
+  const tog=(key,label,hint='')=>`<div class="toggle-group">
+    <label class="toggle"><input type="checkbox" id="s_${key}" ${s[key]==='true'?'checked':''}
+      onchange="previewSettings()"><span class="toggle-slider"></span></label>
+    <div><div class="toggle-label">${label}</div>${hint?`<div style="font-size:11px;color:var(--muted)">${hint}</div>`:''}</div>
+  </div>`;
+  el.innerHTML=`<div class="settings-grid">
+    <div class="card"><div class="card-header"><div class="card-title">📐 Nisab</div></div>
+      <div class="card-body">
+        <div class="form-grid form-grid-2" style="gap:12px;margin-bottom:12px">
+          <div class="form-group"><label class="form-label">Metal</label>
+            <select id="s_nisab_type" class="form-control" onchange="previewSettings()">
+              <option value="silver" ${s.nisab_type==='silver'?'selected':''}>Silver (52.5 Tola)</option>
+              <option value="gold"   ${s.nisab_type==='gold'  ?'selected':''}>Gold (7.5 Tola)</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Karat</label>
+            <select id="s_nisab_karat" class="form-control" onchange="previewSettings()">
+              <option value="22"          ${s.nisab_karat==='22'         ?'selected':''}>22 Karat</option>
+              <option value="21"          ${s.nisab_karat==='21'         ?'selected':''}>21 Karat</option>
+              <option value="18"          ${s.nisab_karat==='18'         ?'selected':''}>18 Karat</option>
+              <option value="Traditional" ${s.nisab_karat==='Traditional'?'selected':''}>Traditional</option>
+            </select></div>
         </div>
-      </div>
-
-      <!-- RATE -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">💯 Rate & Selling Price</div></div>
-        <div class="card-body">
-          <div class="form-grid" style="gap:12px">
-            <div class="form-group">
-              <label class="form-label">Base Zakat Rate (%)</label>
-              <input id="s_zakat_rate" class="form-control" type="number"
-                value="${s.zakat_rate||2.5}" step="0.01" min="0" max="100"
-                oninput="settingChanged()">
-              <div class="form-hint">Standard Islamic rate is 2.5%</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Gold/Silver Selling Price (%)</label>
-              <input id="s_selling_pct" class="form-control" type="number"
-                value="${s.selling_pct||80}" step="1" min="1" max="100"
-                oninput="settingChanged()">
-              <div class="form-hint">Selling value as % of market price (e.g. 80%)</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Lunar Year (days)</label>
-              <input id="s_lunar_days" class="form-control" type="number"
-                value="${s.lunar_days||354}" step="1" min="354" max="384"
-                oninput="settingChanged()">
-              <div class="form-hint">Standard: 354 days (lunar year)</div>
-            </div>
-          </div>
+        <div id="nisab-prev" class="info-box info-green" style="font-size:12px"></div>
+      </div></div>
+    <div class="card"><div class="card-header"><div class="card-title">💯 Rate &amp; Pricing</div></div>
+      <div class="card-body"><div class="form-grid" style="gap:12px">
+        <div class="form-group"><label class="form-label">Base Zakat Rate (%)</label>
+          <input id="s_zakat_rate" class="form-control" type="number" value="${s.zakat_rate||2.5}" step="0.01" min="0" max="100" oninput="previewSettings()">
+          <div class="form-hint">Standard Islamic rate: 2.5%</div></div>
+        <div class="form-group"><label class="form-label">Gold/Silver Selling % of Market</label>
+          <input id="s_selling_pct" class="form-control" type="number" value="${s.selling_pct||80}" step="1" min="1" max="100" oninput="previewSettings()">
+          <div class="form-hint">How much you'd realistically get when selling</div></div>
+        <div class="form-group"><label class="form-label">Lunar Year (days)</label>
+          <input id="s_lunar_days" class="form-control" type="number" value="${s.lunar_days||354}" step="1" min="354" max="384" oninput="previewSettings()">
+          <div class="form-hint">Standard: 354 days</div></div>
+      </div></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">✅ Include in Wealth</div></div>
+      <div class="card-body">
+        ${tog('incl_gold','🏅 Gold','Selling value')}
+        ${tog('incl_silver','🥈 Silver','Selling value')}
+        ${tog('incl_dep','🏦 Deposits','Bank savings &amp; cash')}
+        ${tog('incl_icap','📈 Capital Investments','Profit reinvested into capital')}
+        ${tog('incl_imon','💹 Monthly Investments','Principal of monthly-profit investments')}
+        ${tog('incl_lrec','📤 Loan Receivable','Money owed to you')}
+      </div></div>
+    <div class="card"><div class="card-header"><div class="card-title">💳 Loans</div></div>
+      <div class="card-body">
+        ${tog('ded_lpay','📥 Deduct Loan Payable','Subtract what you owe from Zakatable wealth')}
+        <div class="info-box info-gold mt-14" style="font-size:12px">
+          <b>Islamic Rule:</b> Loan receivable adds to wealth; loan payable reduces it.
         </div>
-      </div>
-
-      <!-- WEALTH INCLUSION -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">✅ Include in Zakat Wealth</div></div>
-        <div class="card-body">
-          ${toggle('incl_gold',   '🏅 Gold',                'Include gold selling value')}
-          ${toggle('incl_silver', '🥈 Silver',              'Include silver selling value')}
-          ${toggle('incl_dep',    '🏦 Deposits',            'Include bank savings & cash')}
-          ${toggle('incl_icap',   '📈 Capital Investments', 'Profit reinvested into capital')}
-          ${toggle('incl_imon',   '💹 Monthly Investments', 'Monthly-profit investments (principal)')}
-          ${toggle('incl_lrec',   '📤 Loan Receivable',     'Money owed to you by others')}
-        </div>
-      </div>
-
-      <!-- LOAN TREATMENT -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">💳 Loan Treatment</div></div>
-        <div class="card-body">
-          ${toggle('ded_lpay', '📥 Deduct Loan Payable',
-            'Subtract money you owe from total Zakatable wealth')}
-          <div style="margin-top:16px;padding:12px;background:var(--gold-light);border-radius:var(--radius-sm);font-size:12px">
-            <b>ℹ️ Islamic Finance Rule:</b> Loan receivable increases your Zakatable wealth.
-            Loan payable reduces it. This is enabled by default.
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-      <div id="settings-preview" style="flex:1;padding:12px 14px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:12px;color:var(--primary)"></div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
-    </div>`;
-
-  updateSettingsPreview();
+      </div></div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div id="settings-prev" class="info-box info-green" style="flex:1;font-size:12px;min-width:200px"></div>
+    <button class="btn btn-primary" onclick="saveSettings()" style="min-width:160px">💾 Save Settings</button>
+  </div>`;
+  previewSettings();
 }
 
-function settingChanged() { updateSettingsPreview(); }
-
-function updateSettingsPreview() {
-  const prev = document.getElementById('settings-preview');
-  if (!prev) return;
-  const nisabType  = document.getElementById('s_nisab_type')?.value  || 'silver';
-  const nisabKarat = document.getElementById('s_nisab_karat')?.value || '22';
-  const rate       = document.getElementById('s_zakat_rate')?.value  || '2.5';
-  const sellPct    = document.getElementById('s_selling_pct')?.value || '80';
-  const days       = document.getElementById('s_lunar_days')?.value  || '354';
-  const mkt        = appData.market || [];
-  const key        = `${nisabType === 'silver' ? 'Silver' : 'Gold'}_${nisabKarat}`;
-  const ppu        = mkt.find(m => `${m['Type']}_${m['KARAT']}` === key);
-  const price      = ppu ? +(ppu['Price Per Gram (Tk)']||0) : 0;
-  const weight     = nisabType === 'silver' ? 612.36 : 87.48;
-  const nisabVal   = weight * price;
-
-  const nisabPrevEl = document.getElementById('nisab-preview');
-  if (nisabPrevEl) {
-    nisabPrevEl.innerHTML = price > 0
-      ? `Nisab = ${weight}g × ৳${price}/g = <b>${tk(nisabVal)}</b>`
-      : `⚠️ Market price for ${nisabKarat}K ${nisabType} not set. Update in Market Values.`;
-  }
-
-  prev.innerHTML = `
-    Nisab: <b>${nisabType === 'silver' ? '52.5 Tola Silver' : '7.5 Tola Gold'} (${nisabKarat}K)</b>
-    = ${tk(nisabVal)} &nbsp;|&nbsp;
-    Zakat Rate: <b>${rate}%</b> for ${days} days &nbsp;|&nbsp;
-    Gold/Silver Selling Price: <b>${sellPct}%</b> of market
-  `;
+function previewSettings() {
+  const nisabType=document.getElementById('s_nisab_type')?.value||'silver';
+  const nisabKarat=document.getElementById('s_nisab_karat')?.value||'22';
+  const rate=document.getElementById('s_zakat_rate')?.value||'2.5';
+  const sellPct=document.getElementById('s_selling_pct')?.value||'80';
+  const mkt=appData.market||[], key=`${nisabType==='silver'?'Silver':'Gold'}_${nisabKarat}`;
+  const row=mkt.find(m=>`${m['Type']}_${m['KARAT']}`===key);
+  const ppu=row?+(row['Price Per Gram (Tk)']||0):0;
+  const weight=nisabType==='silver'?612.36:87.48;
+  const nisabVal=weight*ppu;
+  const np=document.getElementById('nisab-prev');
+  const sp=document.getElementById('settings-prev');
+  if (np) np.innerHTML=ppu>0?`Nisab = ${weight}g × ৳${ppu}/g = <b>${tk(nisabVal)}</b>`:
+    `⚠️ No market price for ${nisabKarat}K ${nisabType}. Set in Market Values.`;
+  if (sp) sp.innerHTML=`Nisab: <b>${nisabType==='silver'?'52.5 Tola Silver':'7.5 Tola Gold'} (${nisabKarat}K)</b>
+    = ${tk(nisabVal)} | Rate: <b>${rate}%</b> | Selling: <b>${sellPct}% of market</b>`;
 }
 
 async function saveSettings() {
-  const boolVal = id => document.getElementById(id)?.checked ? 'true' : 'false';
-  const s = {
-    nisab_type  : document.getElementById('s_nisab_type')?.value,
-    nisab_karat : document.getElementById('s_nisab_karat')?.value,
-    zakat_rate  : document.getElementById('s_zakat_rate')?.value,
-    selling_pct : document.getElementById('s_selling_pct')?.value,
-    lunar_days  : document.getElementById('s_lunar_days')?.value,
-    incl_gold   : boolVal('s_incl_gold'),
-    incl_silver : boolVal('s_incl_silver'),
-    incl_dep    : boolVal('s_incl_dep'),
-    incl_icap   : boolVal('s_incl_icap'),
-    incl_imon   : boolVal('s_incl_imon'),
-    incl_lrec   : boolVal('s_incl_lrec'),
-    ded_lpay    : boolVal('s_ded_lpay'),
-  };
-
+  const bv=id=>document.getElementById(id)?.checked?'true':'false';
+  const s={nisab_type:document.getElementById('s_nisab_type')?.value,
+    nisab_karat:document.getElementById('s_nisab_karat')?.value,
+    zakat_rate:document.getElementById('s_zakat_rate')?.value,
+    selling_pct:document.getElementById('s_selling_pct')?.value,
+    lunar_days:document.getElementById('s_lunar_days')?.value,
+    incl_gold:bv('s_incl_gold'),incl_silver:bv('s_incl_silver'),incl_dep:bv('s_incl_dep'),
+    incl_icap:bv('s_incl_icap'),incl_imon:bv('s_incl_imon'),incl_lrec:bv('s_incl_lrec'),ded_lpay:bv('s_ded_lpay')};
   showLoader('Saving settings…');
   try {
-    const r = await API.post('saveSettings', s);
-    if (r.error) throw new Error(r.error);
-    toast('✓ Settings saved. Recalculating…', 'success');
-    await loadAll();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  finally { hideLoader(); }
+    const r=await API.post('saveSettings',s); if (r.error) throw new Error(r.error);
+    toast('✓ Settings saved','success'); await loadAll();
+  } catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
 }
 
-// ══════════════════════════════════════════════
-// GENERIC MODAL
-// ══════════════════════════════════════════════
-
-function openModal({ title, body, wide, save, saveLabel }) {
-  modalCfg = { save };
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML    = body;
-  document.getElementById('modal-save-btn').textContent = saveLabel || 'Save';
-  document.getElementById('modal-box').className     = wide ? 'modal modal-wide' : 'modal';
+// ══════ MODAL ════════════════════════════════════════════════
+function openModal({title,body,wide,save,saveLabel}) {
+  modalCfg={save};
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-save-btn').textContent=saveLabel||'Save';
+  document.getElementById('modal-save-btn').className='btn btn-primary';
+  document.getElementById('modal-box').className=wide?'modal modal-wide':'modal';
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
+async function handleModalSave() { if (modalCfg?.save) await modalCfg.save(); }
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); modalCfg=null; }
 
-async function handleModalSave() {
-  if (modalCfg?.save) await modalCfg.save();
+// ══════ WEALTH ITEM MODALS ═══════════════════════════════════
+function buildForm(sc, pre={}) {
+  return `<div class="form-grid form-grid-2">${sc.fields.map(f=>{
+    const v=pre[f.k]!==undefined?escHtml(String(pre[f.k])):'';
+    const id=`f_${f.k.replace(/[\s()]/g,'_')}`;
+    if (f.t==='select') return `<div class="form-group">
+      <label class="form-label">${f.l}${f.req?' *':''}</label>
+      <select id="${id}" class="form-control ${f.cls||''}" onchange="${f.onInput||''}">
+        ${(f.opts||[]).map(o=>`<option ${v===o?'selected':''}>${o}</option>`).join('')}
+      </select></div>`;
+    return `<div class="form-group">
+      <label class="form-label">${f.l}${f.req?' *':''}</label>
+      <input id="${id}" type="${f.t||'text'}" class="form-control ${f.cls||''}"
+        value="${v}" placeholder="${f.ph||''}" step="${f.step||''}"
+        ${f.onInput?`oninput="${f.onInput}"`:''} ${f.req?'required':''}></div>`;
+  }).join('')}</div>`;
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.add('hidden');
-  modalCfg = null;
-}
-
-// ══════════════════════════════════════════════
-// WEALTH ITEM MODALS (ADD / EDIT)
-// ══════════════════════════════════════════════
-
-function buildFormHTML(schema, prefill = {}) {
-  return `<div class="form-grid form-grid-2">${
-    schema.fields.map(f => {
-      const val = prefill[f.k] !== undefined ? escHtml(String(prefill[f.k])) : '';
-      if (f.t === 'select') {
-        return `<div class="form-group">
-          <label class="form-label">${f.l}${f.req?' *':''}</label>
-          <select id="f_${f.k.replace(/\s/g,'_')}" class="form-control ${f.cls||''}"
-            onchange="${f.onInput||''}">
-            ${(f.opts||[]).map(o => `<option ${val===o?'selected':''}>${o}</option>`).join('')}
-          </select>
-        </div>`;
-      }
-      if (f.t === 'textarea') {
-        return `<div class="form-group" style="grid-column:1/-1">
-          <label class="form-label">${f.l}${f.req?' *':''}</label>
-          <textarea id="f_${f.k.replace(/\s/g,'_')}" class="form-control ${f.cls||''}"
-            rows="2">${val}</textarea>
-        </div>`;
-      }
-      return `<div class="form-group ${f.fullWidth?'':''}">
-        <label class="form-label">${f.l}${f.req?' *':''}</label>
-        <input id="f_${f.k.replace(/\s/g,'_')}" type="${f.t||'text'}"
-          class="form-control ${f.cls||''}"
-          value="${val}" placeholder="${f.ph||''}"
-          step="${f.step||''}" ${f.onInput?`oninput="${f.onInput}"`:''}
-          ${f.req?'required':''}>
-      </div>`;
-    }).join('')
-  }</div>`;
-}
-
-function getFormData(schema) {
-  const d = {};
-  schema.fields.forEach(f => {
-    const id = `f_${f.k.replace(/\s/g,'_')}`;
-    const el = document.getElementById(id);
+function getFormData(sc) {
+  const d={};
+  sc.fields.forEach(f=>{
+    const id=`f_${f.k.replace(/[\s()]/g,'_')}`, el=document.getElementById(id);
     if (!el) return;
-    const raw = el.value;
-    const isNum = f.t === 'number';
-    d[f.k] = isNum ? (parseFloat(raw) || 0) : raw;
-  });
-  return d;
+    d[f.k]=f.t==='number'?(parseFloat(el.value)||0):el.value;
+  }); return d;
 }
 
-function openAddModal(schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  openModal({
-    title    : `+ Add ${schema.title}`,
-    body     : buildFormHTML(schema),
-    wide     : true,
-    saveLabel: `Add ${schema.title}`,
-    save     : async () => {
-      const d = getFormData(schema);
-      const reqField = schema.fields.find(f => f.req && !d[f.k]);
-      if (reqField) { toast(`Please fill in "${reqField.l}"`, 'warning'); return; }
+function openAddModal(key) {
+  const sc=SCHEMAS[key];
+  openModal({ title:`+ Add ${sc.title}`, body:buildForm(sc), wide:true, saveLabel:`Add ${sc.title}`,
+    save:async()=>{
+      const d=getFormData(sc);
+      const req=sc.fields.find(f=>f.req&&!d[f.k]);
+      if (req){toast(`Fill in "${req.l}"`,'warning');return;}
       showLoader('Saving…');
-      try {
-        const r = await API.post('add', d, { sheet: schema.sheet });
-        if (r.error) throw new Error(r.error);
-        toast(`✓ ${schema.title} added`, 'success');
-        closeModal();
-        const all = await API.get('getAllData');
-        if (!all.error) { appData = all; renderAll(); }
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
+      try { const r=await API.post('add',d,{sheet:sc.sheet}); if (r.error) throw new Error(r.error);
+        toast(`✓ ${sc.title} added`,'success'); closeModal();
+        const all=await API.get('getAllData'); if (!all.error){appData=all;renderAll();}
+      } catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
     }
   });
 }
 
-function openEditModal(schemaKey, rowData) {
-  const schema = SCHEMAS[schemaKey];
-  openModal({
-    title    : `✏️ Edit ${schema.title}`,
-    body     : buildFormHTML(schema, rowData),
-    wide     : true,
-    saveLabel: 'Update',
-    save     : async () => {
-      const d = getFormData(schema);
+function openEditModal(key, row) {
+  const sc=SCHEMAS[key];
+  openModal({ title:`✏️ Edit ${sc.title}`, body:buildForm(sc,row), wide:true, saveLabel:'Update',
+    save:async()=>{
+      const d=getFormData(sc);
       showLoader('Updating…');
-      try {
-        const r = await API.post('update', d, { sheet: schema.sheet, row: rowData._row });
-        if (r.error) throw new Error(r.error);
-        toast(`✓ ${schema.title} updated`, 'success');
-        closeModal();
-        const all = await API.get('getAllData');
-        if (!all.error) { appData = all; renderAll(); }
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-      finally { hideLoader(); }
+      try { const r=await API.post('update',d,{sheet:sc.sheet,row:row._row}); if (r.error) throw new Error(r.error);
+        toast(`✓ ${sc.title} updated`,'success'); closeModal();
+        const all=await API.get('getAllData'); if (!all.error){appData=all;renderAll();}
+      } catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
     }
   });
 }
 
-// ══════════════════════════════════════════════
-// DELETE ITEMS
-// ══════════════════════════════════════════════
-
-async function deleteItem(sheet, row, schemaKey) {
-  const schema = SCHEMAS[schemaKey];
-  confirmDialog(`Delete this ${schema?.title || 'entry'}? This cannot be undone.`, async () => {
+// ══════ DELETE ═══════════════════════════════════════════════
+async function deleteItem(sheet,row,key) {
+  const sc=SCHEMAS[key];
+  confirmDialog(`Delete this ${sc?.title||'entry'}?`, async()=>{
     showLoader('Deleting…');
-    try {
-      const r = await API.post('delete', {}, { sheet, row });
-      if (r.error) throw new Error(r.error);
-      toast('Entry deleted', 'success');
-      const all = await API.get('getAllData');
-      if (!all.error) { appData = all; renderAll(); }
-    } catch (e) { toast('Error: ' + e.message, 'error'); }
-    finally { hideLoader(); }
+    try { const r=await API.post('delete',{},{sheet,row}); if (r.error) throw new Error(r.error);
+      toast('Entry deleted','success');
+      const all=await API.get('getAllData'); if (!all.error){appData=all;renderAll();}
+    } catch(e){toast('Error: '+e.message,'error');} finally{hideLoader();}
   });
 }
 
-// ══════════════════════════════════════════════
-// AUTO-CALCULATE METAL VALUES
-// ══════════════════════════════════════════════
-
+// ══════ AUTO-CALC METALS ═════════════════════════════════════
 function autoCalcMetal(type) {
-  // Field IDs: f_ + fieldKey.replace(/\s/g,'_')
   const karatEl = document.getElementById('f_KARAT');
-  const wgtEl   = document.getElementById('f_Weight_(Gram)');
-  const valEl   = document.getElementById('f_Value_(Tk)');
-  const sellEl  = document.getElementById('f_Selling_Value_(Tk)');
-
-  if (!karatEl || !wgtEl) return;
-
-  const karat   = karatEl.value;
-  const weight  = parseFloat(wgtEl.value) || 0;
-  const mktType = type === 'gold' ? 'Gold' : 'Silver';
-  const ppu     = getMktPrice(mktType, karat);
-  const sellPct = parseFloat(appData.settings?.selling_pct || 80) / 100;
-
-  if (ppu > 0) {
-    const val  = +(weight * ppu).toFixed(2);
-    const sell = +(val * sellPct).toFixed(2);
-    if (valEl)  { valEl.value  = val;  valEl.classList.add('auto-fill'); }
-    if (sellEl) { sellEl.value = sell; sellEl.classList.add('auto-fill'); }
+  const wgtEl   = document.getElementById('f_Weight__Gram_');  // () → __
+  const valEl   = document.getElementById('f_Value__Tk_');
+  const sellEl  = document.getElementById('f_Selling_Value__Tk_');
+  if (!karatEl||!wgtEl) return;
+  const ppu=getMktPrice(type==='gold'?'Gold':'Silver', karatEl.value);
+  const w=parseFloat(wgtEl.value)||0;
+  const sp=parseFloat(appData.settings?.selling_pct||80)/100;
+  if (ppu>0) {
+    const val=+(w*ppu).toFixed(2), sell=+(val*sp).toFixed(2);
+    if (valEl)  {valEl.value=val;  valEl.classList.add('auto-fill');}
+    if (sellEl) {sellEl.value=sell;sellEl.classList.add('auto-fill');}
   } else {
-    if (valEl)  valEl.placeholder = '⚠ Set market price first in Market Values';
-    if (sellEl) sellEl.placeholder = '⚠ Set market price first in Market Values';
+    if (valEl)  valEl.placeholder='⚠ Set market price first';
+    if (sellEl) sellEl.placeholder='⚠ Set market price first';
   }
 }
 
-function getMktPrice(type, karat) {
-  const mkt = appData.market || [];
-  const row = mkt.find(m => m['Type'] === type && String(m['KARAT']) === String(karat));
-  return row ? +(row['Price Per Gram (Tk)'] || 0) : 0;
+function getMktPrice(type,karat) {
+  const row=(appData.market||[]).find(m=>m['Type']===type&&String(m['KARAT'])===String(karat));
+  return row?+(row['Price Per Gram (Tk)']||0):0;
 }
 
-// ══════════════════════════════════════════════
-// CONFIRM DIALOG
-// ══════════════════════════════════════════════
-
-function confirmDialog(msg, onOk) {
-  const body = `<div class="confirm-msg">
-    <span class="confirm-icon">⚠️</span>
-    ${escHtml(msg)}
-  </div>`;
-  openModal({
-    title: 'Confirm Action',
-    body,
-    saveLabel: 'Yes, Delete',
-    save: async () => { closeModal(); await onOk(); }
-  });
-  document.getElementById('modal-save-btn').className = 'btn btn-danger';
+// ══════ CONFIRM ══════════════════════════════════════════════
+function confirmDialog(msg,onOk) {
+  openModal({ title:'Confirm', body:`<div class="confirm-msg"><span class="confirm-icon">⚠️</span>${escHtml(msg)}</div>`,
+    saveLabel:'Yes, Delete', save:async()=>{closeModal();await onOk();} });
+  document.getElementById('modal-save-btn').className='btn btn-danger';
 }
 
-// ══════════════════════════════════════════════
-// TOAST NOTIFICATIONS
-// ══════════════════════════════════════════════
-
-function toast(msg, type = 'success') {
-  const icons = { success:'✓', error:'✗', warning:'⚠', info:'ℹ' };
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  el.innerHTML = `<span class="toast-icon">${icons[type]||'•'}</span><span>${escHtml(msg)}</span>`;
+// ══════ TOAST ═══════════════════════════════════════════════
+function toast(msg,type='success') {
+  const icons={success:'✓',error:'✗',warning:'⚠',info:'ℹ'};
+  const el=document.createElement('div'); el.className=`toast toast-${type}`;
+  el.innerHTML=`<span class="toast-icon">${icons[type]||'•'}</span><span>${escHtml(msg)}</span>`;
   document.getElementById('toast-wrap').appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(), 350); }, 3500);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),350);},3500);
 }
 
-// ══════════════════════════════════════════════
-// LOADER
-// ══════════════════════════════════════════════
+// ══════ LOADER ═══════════════════════════════════════════════
+function showLoader(msg='Loading…'){document.getElementById('loader-msg').textContent=msg;document.getElementById('loader').classList.remove('hidden');}
+function hideLoader(){document.getElementById('loader').classList.add('hidden');}
 
-function showLoader(msg = 'Loading…') {
-  document.getElementById('loader-msg').textContent = msg;
-  document.getElementById('loader').classList.remove('hidden');
-}
-function hideLoader() {
-  document.getElementById('loader').classList.add('hidden');
-}
-
-// ══════════════════════════════════════════════
-// DATE UTILITIES
-// ══════════════════════════════════════════════
-
+// ══════ DATES ════════════════════════════════════════════════
 function updateDateChips() {
-  const now = new Date();
-  document.getElementById('date-chip').textContent  = now.toLocaleDateString('en-BD', { day:'2-digit', month:'short', year:'numeric' });
-  try {
-    const hijri = new Intl.DateTimeFormat('en-u-ca-islamic', { day:'numeric', month:'long', year:'numeric' }).format(now);
-    document.getElementById('hijri-chip').textContent = hijri;
-  } catch (_) {
-    document.getElementById('hijri-chip').textContent = '';
-  }
+  const now=new Date();
+  const dEl=document.getElementById('date-chip'), hEl=document.getElementById('hijri-chip');
+  if (dEl) dEl.textContent=now.toLocaleDateString('en-BD',{day:'2-digit',month:'short',year:'numeric'});
+  try { if (hEl) hEl.textContent=new Intl.DateTimeFormat('en-u-ca-islamic',{day:'numeric',month:'long',year:'numeric'}).format(now); }
+  catch(_){ if (hEl) hEl.textContent=''; }
 }
-
-function fdate(v) {
+function fdate(v){
   if (!v) return '—';
-  try {
-    return new Date(v).toLocaleDateString('en-BD', { day:'2-digit', month:'short', year:'numeric' });
-  } catch (_) { return String(v); }
+  try{return new Date(v).toLocaleDateString('en-BD',{day:'2-digit',month:'short',year:'numeric'});}
+  catch(_){return String(v);}
 }
 
-// ══════════════════════════════════════════════
-// NUMBER / CURRENCY FORMATTING
-// ══════════════════════════════════════════════
+// ══════ NUMBER FORMAT ════════════════════════════════════════
+function tk(n){const v=parseFloat(n)||0;return '৳ '+v.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function num(n){const v=parseFloat(n)||0;return v.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pct(n){return (parseFloat(n)||0).toFixed(4)+'%';}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-function tk(n) {
-  const v = parseFloat(n) || 0;
-  return '৳ ' + v.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function num(n) {
-  const v = parseFloat(n) || 0;
-  return v.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function pct(n) {
-  return (parseFloat(n) || 0).toFixed(4) + '%';
-}
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-// ══════════════════════════════════════════════
-// KEYBOARD SHORTCUTS
-// ══════════════════════════════════════════════
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// Close modal on backdrop click
-document.getElementById('modal-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-});
+// ══════ EVENTS ═══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{ if (e.key==='Escape') closeModal(); });
+document.getElementById('modal-overlay').addEventListener('click',e=>{ if (e.target===document.getElementById('modal-overlay')) closeModal(); });
+// Fix form field IDs: buildForm replaces spaces+parens with underscores
+// 'Weight (Gram)' → f_Weight__Gram_  (space→_, (→_, )→_)
+// We need to match what buildForm generates: f.k.replace(/[\s()]/g,'_')
+// 'Weight (Gram)' → 'Weight__Gram_'  → id: f_Weight__Gram_
+// Let's verify: 'Value (Tk)' → 'Value__Tk_' → f_Value__Tk_
+// 'Selling Value (Tk)' → 'Selling_Value__Tk_' → f_Selling_Value__Tk_
+// 'KARAT' → 'KARAT' → f_KARAT  ✓
 </script>
 </body>
 </html>
